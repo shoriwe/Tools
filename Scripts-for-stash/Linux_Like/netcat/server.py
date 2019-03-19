@@ -109,6 +109,7 @@ class ProxySocketHandler:
 
     def start(self):
         try:
+            self.__client.send("f\"{\'host;port;AF_INET/AF_INET6;SOCK_STREAM/SOCK_DGRAM\':<50}\"".encode('utf-8'))
             buffer = get_response(self.__client, self.__max_recv_buffer)
             target_info = get_target_info(buffer)
             target = self.__connect_to_target(target_info)
@@ -121,10 +122,10 @@ class ProxySocketHandler:
             if self.__sniff:
                 while True:
                     msg = depurate(get_response(self.__client, self.__max_recv_buffer))
-
+                    print(msg)
                     target.send(msg)
                     response = depurate(get_response(target, self.__max_recv_buffer))
-
+                    print(response)
                     self.__client.send(response)
             else:
                 while True:

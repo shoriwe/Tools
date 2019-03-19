@@ -34,6 +34,7 @@ class Client:
         self.__client.settimeout(2.5)
         welcome = get_response(self.__client, self.__max_buffer_size)
         if len(welcome):
+            print(welcome.decode('utf-8'))
             return True
 
         else:

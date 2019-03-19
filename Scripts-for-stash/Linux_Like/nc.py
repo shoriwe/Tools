@@ -85,8 +85,8 @@ def main(args=None):
     if not args:
         parser = ArgumentParser()
 
-        parser.add_argument('host', help='Host to use can be ipv4 or ipv6', default='127.0.0.1', nargs='*')
-        parser.add_argument('port', help='Port to use', default=4444, nargs='*')
+        parser.add_argument('host', help='Host to use can be ipv4 or ipv6', default='127.0.0.1')
+        parser.add_argument('port', help='Port to use', default=4444, type=int)
 
         # Variables
         # Variables can't output bools because this is the way we identify options like scan, client, proxy...
