@@ -1,0 +1,159 @@
+[
+  {
+    "nodes" : [
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{0, 0}, {320, 240}}",
+        "class" : "View",
+        "attributes" : {
+          "frame" : "{{110, 70}, {100, 100}}",
+          "background_color" : "RGBA(0.891509,0.891509,0.891509,1.000000)",
+          "class" : "View",
+          "name" : "view1",
+          "uuid" : "9FDD8B3C-CE24-4B71-819D-F5CC78055923"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{57, 54}, {200, 32}}",
+        "class" : "TextField",
+        "attributes" : {
+          "uuid" : "5890394F-4D96-44BB-BCEC-22A69DD1AE19",
+          "corner_radius" : 1,
+          "frame" : "{{60, 104}, {200, 32}}",
+          "tint_color" : "RGBA(0.009434,0.009434,0.009434,1.000000)",
+          "border_width" : 1,
+          "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "alignment" : "center",
+          "autocorrection_type" : "default",
+          "placeholder" : "Script name",
+          "font_name" : "<System>",
+          "spellchecking_type" : "default",
+          "class" : "TextField",
+          "name" : "textfield1",
+          "font_size" : 17
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{57, 94}, {200, 32}}",
+        "class" : "TextField",
+        "attributes" : {
+          "uuid" : "637CB6A1-C5E8-4030-B333-480DAFFB0350",
+          "corner_radius" : 1,
+          "background_color" : "RGBA(0.944444,1.000000,0.944444,1.000000)",
+          "frame" : "{{60, 104}, {200, 32}}",
+          "tint_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "border_width" : 2,
+          "border_color" : "RGBA(0.007075,0.007075,0.007075,1.000000)",
+          "alignment" : "center",
+          "autocorrection_type" : "default",
+          "placeholder" : "New script name",
+          "font_name" : "<System>",
+          "spellchecking_type" : "default",
+          "class" : "TextField",
+          "name" : "textfield2",
+          "font_size" : 17
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{120, 149}, {80, 52}}",
+        "class" : "Button",
+        "attributes" : {
+          "uuid" : "BB4D3C9B-5545-423B-930D-70C010F673CE",
+          "corner_radius" : 2,
+          "background_color" : "RGBA(0.888889,1.000000,1.000000,1.000000)",
+          "frame" : "{{120, 104}, {80, 32}}",
+          "tint_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "border_width" : 1,
+          "border_color" : "RGBA(0.010482,0.011792,0.011792,1.000000)",
+          "title" : "Refractor",
+          "action" : "start",
+          "class" : "Button",
+          "name" : "button1",
+          "font_size" : 15
+        },
+        "selected" : true
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{208, 149}, {75, 52}}",
+        "class" : "Label",
+        "attributes" : {
+          "font_size" : 18,
+          "frame" : "{{85, 104}, {150, 32}}",
+          "uuid" : "F6D10E6D-C7D3-4B1B-9F23-D8A07F7F1A0E",
+          "class" : "Label",
+          "alignment" : "center",
+          "text" : "Leidos",
+          "name" : "label1",
+          "font_name" : "<System>"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{37, 149}, {75, 52}}",
+        "class" : "Label",
+        "attributes" : {
+          "font_name" : "<System>",
+          "frame" : "{{85, 104}, {150, 32}}",
+          "uuid" : "F6D10E6D-C7D3-4B1B-9F23-D8A07F7F1A0E",
+          "class" : "Label",
+          "alignment" : "center",
+          "text" : "Cambios",
+          "font_size" : 18,
+          "name" : "label2"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{57, 14}, {200, 32}}",
+        "class" : "TextField",
+        "attributes" : {
+          "placeholder" : "Folder",
+          "font_size" : 17,
+          "frame" : "{{60, 104}, {200, 32}}",
+          "spellchecking_type" : "default",
+          "class" : "TextField",
+          "uuid" : "FC6BD579-E142-492D-BDD2-FC8D4AFE6357",
+          "alignment" : "center",
+          "autocorrection_type" : "default",
+          "name" : "textfield3",
+          "font_name" : "<System>"
+        },
+        "selected" : false
+      }
+    ],
+    "frame" : "{{0, 0}, {320, 240}}",
+    "class" : "View",
+    "attributes" : {
+      "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+      "enabled" : true,
+      "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+      "name" : "",
+      "tint_color" : "RGBA(0.000000,0.478000,1.000000,1.000000)",
+      "flex" : ""
+    },
+    "selected" : false
+  }
+]
