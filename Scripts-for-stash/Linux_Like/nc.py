@@ -42,7 +42,7 @@ class Options:
                                 get_protocol(args['protocol']),
                                 args['directory'], args['maxbind'], args['buffersize'], args['interval'],
                                 args['input-header'], args['formating'], defaultdata(args['defaultdata']),
-                                args['sniff'])
+                                args['sniff'], args['logging-file'])
 
     def listener(self):
         self.server_object_handler()
@@ -59,8 +59,8 @@ class Options:
     def client(self):
         args = self.__args
         self.__handler = Client(args['host'], args['port'], get_family(args['family']), get_protocol(args['protocol']),
-                                args['buffersize'], args['formating'], args['input-header'], args['interval'],
-                                defaultdata(args['defaultdata']))
+                                args['buffersize'], args['input-header'], args['formating'], args['interval'],
+                                defaultdata(args['defaultdata']), args['proxy-header'])
         self.__handler.connect()
 
     def scan(self):
@@ -91,38 +91,38 @@ def main(args=None):
         # Variables
         # Variables can't output bools because this is the way we identify options like scan, client, proxy...
         # if you need something similar to your new function use 0 and 1 as booleans for if statements
-        parser.add_argument('-ss', '--sniff', help='Help sniff the input process', dest='sniff', default=0,
-                            action='store_const',
-                            const=1)
-        parser.add_argument('-af', '--address-family', help='IPV6 or IPV4', dest='family', default='IPV4')
-        parser.add_argument('-ap', '--address-protocol', help='TCP or UDP', dest='protocol', default='TCP')
-        parser.add_argument('-dd', '--default-data', help='Default data to send throught sockets', default='',
+        parser.add_argument('-n', '--sniff', help='Turn on sniffing for traffic of the proxy process', dest='sniff', default=0,
+                            action='store_const', const=1)
+        parser.add_argument('-N', '--logging-output', help='File to log the connections', dest='logging-file')
+        parser.add_argument('-f', '--address-family', help='IPV6 or IPV4', dest='family', default='IPV4')
+        parser.add_argument('-P', '--address-protocol', help='TCP or UDP', dest='protocol', default='TCP')
+        parser.add_argument('--default-data', help='Default data to send throught sockets', default='',
                             dest='defaultdata')
         parser.add_argument('-t', '--target-hosts',
                             help='Only accept connections from this hosts (for listener and proxy)',
                             dest='targets', type=list, nargs='*', default=[])
         parser.add_argument('-d', '--http-directory-root', help='Base root for the http server', default='./',
                             dest='directory')
-        parser.add_argument('-ih', '--input-header', help='Like >>> when you tipe something', dest='input-header',
+        parser.add_argument('-H', '--input-header', help='Like >>> when you tipe something', dest='input-header',
                             default='>>>')
-        parser.add_argument('-if', '--input-formating',
+        parser.add_argument('-i', '--input-formating',
                             help='The formating for the input like "{}-12" => "{}".format(input())', dest='formating',
                             default='{}')
         parser.add_argument('-b', '--max-buffer-size', help='Size of recv buffer', default=1024, type=int,
                             dest='buffersize')
-        parser.add_argument('-mc', '--max-bind-connections', help='Max number of incoming connections', type=int,
+        parser.add_argument('-m', '--max-bind-connections', help='Max number of incoming connections', type=int,
                             dest='maxbind',
                             default=10)
-        parser.add_argument('-pr', '--port-range', help='The port ranges for the scan default is 1-1000',
+        parser.add_argument('-r', '--port-range', help='The port ranges for the scan default is 1-1000',
                             default='1-1000',
                             dest='port-range')
-        parser.add_argument('-mt', '--max-threads',
+        parser.add_argument('-M', '--max-threads',
                             help='Maximum number of threads to be active at the same time in a port scanning default is 200',
                             default=500, dest='max-n-threads', type=int)
-        parser.add_argument('-sl', '--slow-send', help='Set a time to wait betwen send intervals (seconds)',
+        parser.add_argument('-S', '--slow-send', help='Time to sleep before send a message default is 0',
                             dest='interval',
                             default=0, type=int)
-
+        parser.add_argument('-G', '--proxy-header', help='Header for the program proxy with the format: \'host;port;AF_INET/AF_INET6;SOCK_STREAM/SOCK_DGRAM\'', dest='proxy-header', default=None)
         # Options note that only type bool count as options
         parser.add_argument('-l', '--listener',
                             help='Bind connection for and communicate throught socket also works for reverse connection',

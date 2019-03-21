@@ -1,7 +1,9 @@
 from socket import socket
 from time import sleep
+
+
 # Adaptative recv
-def get_response(client:socket, buffer_size):
+def get_response(client: socket, buffer_size):
     response = b''
     try:
         while True:
@@ -11,24 +13,30 @@ def get_response(client:socket, buffer_size):
             response += buffer
     except:
         return response
+
+
 # Depurate the bytes, return b' ' if its len is 0 otherwise the client can enter in a input bucle
 def depurate(bytes_input):
     if not len(bytes_input):
         return b' '
     else:
         return bytes_input
+
+
 class Client:
-    def __init__(self, host, port, address_family, protocol, max_buffer_size, input_formating, input_header, send_interval:int, default_data):
+    def __init__(self, host, port, address_family, protocol, max_buffer_size, input_header, input_formating,
+                 send_interval: int, default_data, proxy_header):
         self.__address = (host, port)
         self.__client = socket(address_family, protocol)
         self.__max_buffer_size = max_buffer_size
-        # Put the input in a specific format like: format="le {}"; input = "car" ==> "le car"
-        self.__input_formating = input_formating
         # Like >>>
         self.__input_header = input_header
+        # Put the input in a specific format like: format="le {}"; input = "car" ==> "le car"
+        self.__input_formating = input_formating
         self.__sleep_interval = send_interval
         # only send this default data in the loop
         self.__default_data = default_data
+        self.__proxy_header = proxy_header
 
     def __who_starts(self):
         self.__client.settimeout(2.5)
@@ -63,6 +71,19 @@ class Client:
         try:
             self.__client.connect(self.__address)
             self.__who_starts()
+            if self.__proxy_header:
+                print('Sending proxy header')
+                header = self.__proxy_header
+                self.__client.send(f"{header:<50}".encode('utf-8'))
+                self.__who_starts()
             self.__connection_handler()
         except Exception as e:
             print(e)
+
+
+from socket import AF_INET, SOCK_STREAM
+
+# first_msg = f"{'127.0.0.1;1235;AF_INET;SOCK_STREAM':<50}"
+
+# c = Client('127.0.0.1', 1234, AF_INET, SOCK_STREAM, 1024, '>>>', '{}', 0, None, '127.0.0.1;1235;AF_INET;SOCK_STREAM')
+# c.connect()

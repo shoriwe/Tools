@@ -5,6 +5,21 @@ from threading import Thread
 from time import sleep
 
 
+# Function to save bytes into file
+def logger(file_obj: open):
+    def log(btes: bytes, b_from, b_to):
+        if len(btes) > 50:
+            file_obj.write(
+                f'Recieved buffer from {b_from[0]}:{b_from[1]} -> {b_to[0]}:{b_to[1]} of length{len(btes)}\n'.encode(
+                    'utf-8'))
+        else:
+            file_obj.write(
+                f'Recieved buffer from {b_from[0]}:{b_from[1]} -> {b_to[0]}:{b_to[1]}\n'.encode('utf-8') + btes + b'\n')
+        file_obj.flush()
+
+    return log
+
+
 # Adaptative recv
 def get_response(client: socket, buffer_size):
     response = b''
@@ -82,21 +97,28 @@ class SocketHanlder:
         self.__who_starts()
         while True:
             msg = depurate(self.__input())
-
             sleep(self.__sleep_interval)
             self.__client.send(msg)
-
             response = get_response(self.__client, self.__max_recv_buffer)
             self.__output(response)
 
 
 # Handler for the socket proxies
 class ProxySocketHandler:
-    def __init__(self, client, max_recv_buffer, sleep_time, sniff):
+    def __init__(self, client, max_recv_buffer, sleep_time, sniff, output_file):
         self.__client = client
         self.__max_recv_buffer = max_recv_buffer
         self.__sleep_time = sleep_time
         self.__sniff = sniff
+        if output_file:
+            self.__log_function = logger(output_file)
+        else:
+            self.__log_function = lambda btes, b_from, b_to: print(
+                f'Recieved buffer from {b_from[0]}:{b_from[1]} -> {b_to[0]}:{b_to[1]} of len {len(btes)}\n',
+                end='') if len(
+                btes) > 50 else print(
+                f'Recieved buffer from {b_from[0]}:{b_from[1]} -> {b_to[0]}:{b_to[1]}\n' + btes.decode('utf-8') + '\n',
+                end='')
 
     def __connect_to_target(self, target_info):
         try:
@@ -119,13 +141,16 @@ class ProxySocketHandler:
             welcome = depurate(get_response(target, self.__max_recv_buffer))
             self.__client.send(welcome)
             target.settimeout(20)
+
+            client_ip = self.__client.getsockname()
+            target_ip = target.getsockname()
             if self.__sniff:
                 while True:
                     msg = depurate(get_response(self.__client, self.__max_recv_buffer))
-                    print(msg)
+                    self.__log_function(msg, client_ip, target_ip)
                     target.send(msg)
                     response = depurate(get_response(target, self.__max_recv_buffer))
-                    print(response)
+                    self.__log_function(response, target_ip, client_ip)
                     self.__client.send(response)
             else:
                 while True:
@@ -141,7 +166,7 @@ class ProxySocketHandler:
 class Server:
     def __init__(self, host: str, port: int, target_hosts: list, address_family: AddressFamily, protocol: SocketKind,
                  directory: str, max_number_connections: int, max_recv_buffer: int,
-                 sleep_interval, input_header: str, input_formating: str, default_data, sniff: bool):
+                 sleep_interval, input_header: str, input_formating: str, default_data, sniff: bool, output_file):
         self.__host = host
         self.__port = port
         # FOR SOCKET; Accept  the connection if the client side ip is in self.__target_hosts
@@ -163,6 +188,9 @@ class Server:
         # Default data to send to the sockets (for listener)
         self.__default_data = default_data
         self.__sniff = sniff
+
+        # File to log traffic
+        self.__fileobj = open(output_file, 'wb') if output_file else None
 
         self.__address = (host, port)
 
@@ -217,7 +245,8 @@ class Server:
         else:
             connect_to_client = True
         if connect_to_client:
-            handler = ProxySocketHandler(client, self.__max_recv_buffer, self.__sleep_interval, self.__sniff)
+            handler = ProxySocketHandler(client, self.__max_recv_buffer, self.__sleep_interval, self.__sniff,
+                                         self.__fileobj)
             Thread(target=handler.start, ).start()
 
     def proxy_socket(self):
@@ -227,6 +256,9 @@ class Server:
         while True:
             client, address = server.accept()
             self.__proxy_socket_handler(client, address)
+
+# s = Server('127.0.0.1', 1234, [], AF_INET, SOCK_STREAM, './', 2, 1024, 0, '>>>', '{}', None, True, None)
+# s.proxy_socket()
 
 ## The server.py also needs
 # Proxy HTTP
