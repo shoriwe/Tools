@@ -65,8 +65,8 @@ class Options:
 
     def scan(self):
         args = self.__args
-        if '*' == args['host'][0][-1]:
-            base = '.'.join(args['host'][0].split('.')[:len(args['host'][0].split('.')) - 1])
+        if '*' == args['host'][-1]:
+            base = '.'.join(args['host'].split('.')[:len(args['host'].split('.')) - 1])
             for number in range(1, 256):
                 try:
                     host = base + '.' + str(number)
@@ -75,7 +75,7 @@ class Options:
                     self.__handler.scan()
                 except:
                     pass
-        self.__handler = Scanner(args['host'][0], get_family(args['family']), [args['protocol']],
+        self.__handler = Scanner(args['host'], get_family(args['family']), [args['protocol']],
                                  get_range(args['port-range']),
                                  args['max-n-threads'])
         self.__handler.scan()
@@ -86,7 +86,7 @@ def main(args=None):
         parser = ArgumentParser()
 
         parser.add_argument('host', help='Host to use can be ipv4 or ipv6', default='127.0.0.1')
-        parser.add_argument('port', help='Port to use', default=4444, type=int)
+        parser.add_argument('port', help='Port to use', default=4444, type=int, nargs='?')
 
         # Variables
         # Variables can't output bools because this is the way we identify options like scan, client, proxy...
