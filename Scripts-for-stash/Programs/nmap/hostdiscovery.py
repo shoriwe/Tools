@@ -1,4 +1,4 @@
-from socket import socket, AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
+from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
 from threading import Thread
 
 
@@ -103,11 +103,11 @@ class Ports:
         self.__ports += ranges
 
     # -F (Fast (limited port) scan)
-    def fast(self):
+    def fast(self, n):
         self.__ports += [21, 22, 23, 80, 135, 139, 443, 445, 1000, 4444, 8080]
 
     def getports(self):
-        return self.__ports
+        return list(set(self.__ports))
 
 class HostDiscovery:
     def __init__(self):

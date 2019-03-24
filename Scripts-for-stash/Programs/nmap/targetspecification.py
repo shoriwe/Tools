@@ -28,4 +28,4 @@ class TargetSpecification:
                 pass
 
     def gettargets(self):
-        return self.__targets
+        return list(set(self.__targets))

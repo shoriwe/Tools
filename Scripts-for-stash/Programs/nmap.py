@@ -55,7 +55,8 @@ def main(args=None):
 
         # Port specification
         parser.add_argument('-p', dest='portrange', help='-p port ranges (Only scan specified ports)', default='1-1000')
-        parser.add_argument('-F', dest='fast', help='Fast port scanning')
+        parser.add_argument('-F', dest='fast', help='Fast port scanning', default=False, action='store_const',
+                            const=True)
         ## add new port options down here
 
         # Options
@@ -108,6 +109,8 @@ def main(args=None):
             break
         getattr(hs, key)(args[key])
     results = hs.scan()
+
+    # Do something with the resulted scan
     processing = Processing(results)
     if args['jsonoutput']:
         processing.jsonoutput(args['jsonoutput'])
