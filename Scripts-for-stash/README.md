@@ -11,8 +11,3 @@ many others are for made completely by my or inspired in scripts inside books.
 |`wget.py`|Inspired by Linux "wget" command|"https://linux.die.net/man/1/wget"|
 |`netcat.py`|Inspired by Linux "netcat" command line program|"http://netcat.sourceforge.net/"|
 |`find.py`|Inspired by Linux "find" command|"http://man7.org/linux/man-pages/man1/find.1.html"|
-|`nmap.py`|Little implementation of nmap|"https://nmap.org/"|
-
-# Considerations
-* The folders inside `Linux_Like` and the folders inside `Programs` are dependencies of some scripts; they need to be inside `site-packages`
-* `netcat.py` is not like the original netcat, it can do certain things but don't have the same syntax

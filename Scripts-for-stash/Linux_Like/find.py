@@ -5,6 +5,7 @@ from datetime import datetime
 from threading import Thread
 from argparse import ArgumentParser
 
+
 def comparare_dates(date1, date2):
     if not sum(date1) or not sum(date2):
         return False
@@ -15,10 +16,12 @@ def comparare_dates(date1, date2):
                     return False
         return True
 
+
 def get_file_type(file_path):
     if isdir(file_path):
         return 1
     return 2
+
 
 def pattern_in_file(file_path, pattern):
     in_file = False
@@ -30,6 +33,7 @@ def pattern_in_file(file_path, pattern):
     except:
         pass
     return in_file
+
 
 def get_file_creation_date(file_path):
     try:
@@ -44,6 +48,7 @@ def get_file_creation_date(file_path):
     except:
         return 0, 0, 0
 
+
 class Find:
     def __init__(self, starting_point, target, name_can_contein, in_content, date, permissions, file_type, any_):
         self.__starting_point = starting_point
@@ -56,8 +61,8 @@ class Find:
         self.__any = any_
 
     def __get_condition_function(self):
-        permissions = {'r':R_OK, 'w':W_OK, 'x':X_OK}
-        file_types = {'d':1, 'f':2}
+        permissions = {'r': R_OK, 'w': W_OK, 'x': X_OK}
+        file_types = {'d': 1, 'f': 2}
         functions = []
         if self.__target:
             functions.append(lambda root, file: file == self.__target or join(root, file) == self.__target)
@@ -81,25 +86,30 @@ class Find:
     def __search_handler(self, root, directories, files, condition_function):
         for file in directories + files:
             if condition_function(root, file):
-                print(join(root, file)+'\n', end='')
+                print(join(root, file) + '\n', end='')
 
     def search(self):
         condition_function = self.__get_condition_function()
-        for  root, directories, files in walk(self.__starting_point):
+        for root, directories, files in walk(self.__starting_point):
             Thread(target=self.__search_handler, args=(root, directories, files, condition_function)).start()
 
 
 def main(args=None):
     if not args:
         parser = ArgumentParser()
-        parser.add_argument('-starting-point', help='Folder to start the search any file inside it will going to be processed', dest='starting_point', default=getcwd())
+        parser.add_argument('-starting-point',
+                            help='Folder to start the search any file inside it will going to be processed',
+                            dest='starting_point', default=getcwd())
         parser.add_argument('-target', help='Match if the file name is equal to this', dest='target', default=None)
-        parser.add_argument('-name-can-contein', help='The name can contein *something', dest='name_can_contein', default=None)
+        parser.add_argument('-name-can-contein', help='The name can contein *something', dest='name_can_contein',
+                            default=None)
         parser.add_argument('-in-content', help='The file can contein in its CONTENT', dest='in_content', default=None)
         parser.add_argument('-year', help='If file was created in a specific year', type=int, dest='year', default=0)
-        parser.add_argument('-month', help='If file was created in a specific month',type=int,  dest='month', default=0)
-        parser.add_argument('-day',help='If file was created in a specific day', type=int, dest='day', default=0)
-        parser.add_argument('-permissions', help='r w and/or x if the actual user using find have any of this privileges', dest='permissions', default=None)
+        parser.add_argument('-month', help='If file was created in a specific month', type=int, dest='month', default=0)
+        parser.add_argument('-day', help='If file was created in a specific day', type=int, dest='day', default=0)
+        parser.add_argument('-permissions',
+                            help='r w and/or x if the actual user using find have any of this privileges',
+                            dest='permissions', default=None)
         parser.add_argument('-type',
                             help='Type of  the file to find; d for directories; f for files; any other char count as f',
                             dest='type', default=None)
@@ -108,8 +118,10 @@ def main(args=None):
     date = (args['year'], args['month'], args['day'])
     if date == (0, 0, 0):
         date = None
-    f = Find(args['starting_point'], args['target'], args['name_can_contein'], args['in_content'], date, args['permissions'], args['type'], args['any'])
+    f = Find(args['starting_point'], args['target'], args['name_can_contein'], args['in_content'], date,
+             args['permissions'], args['type'], args['any'])
     f.search()
+
 
 if __name__ == '__main__':
     main()
