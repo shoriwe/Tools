@@ -190,9 +190,11 @@ class WGETHandler:
             level = INFO
         if self.__spider:
             log_format = '%(message)s'
+            debug_file = self.__output_file
         else:
             log_format = '%(asctime)s:%(levelname)s:%(message)s'
-        basicConfig(level=level, filename=self.__output_file, format=log_format)
+            debug_file = 'debug.log'
+        basicConfig(level=level, filename=debug_file, format=log_format)
         if self.__spider:
             self.spider(self.__url, self.__deep)
         else:
