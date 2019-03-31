@@ -1,151 +1,315 @@
+from socket import AF_INET6, AF_INET, SOCK_STREAM, SOCK_DGRAM, socket
 from argparse import ArgumentParser
-from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
-from netcat import Server, Client, Scanner
+from logging import basicConfig, info, INFO, CRITICAL
+from threading import Thread
+
+## Options for implement
+## Tunnel
+# -P tunneling port
+# -S tunneling  address
 
 
-# Return family as AF_INET or AF_INET6
-def get_family(family):
-    if family.upper() == 'IPV4':
-        return AF_INET
-    return AF_INET6
+# Recieve function (recieve any size buffer)
+def recv(client):
+    buffer = b''
+    while True:
+        data = client.recv(1024)
+        if len(data) < 1024:
+            return buffer + data
+        buffer += data
 
 
-# Use the protocol as SOCK_STREAM or SOCK_DGRAM
-def get_protocol(protocol):
-    if protocol.upper() == 'TCP':
-        return SOCK_STREAM
-    return SOCK_DGRAM
-
-
-# Transform the arguments None to pythons None
-def defaultdata(data):
-    if len(data):
+# Check who start sendind data
+def checkTheyFirstSend(client, timeout):
+    client.settimeout(5)
+    try:
+        data = recv(client)
+        client.settimeout(timeout)
         return data
-    return None
+    except:
+        client.settimeout(timeout)
+        return False
+
+# Handler for the connection tunnel
+class TunnelHandler:
+    pass
+# Handler for the scanner
+class ScannerHandler:
+    def __init__(self):
+        # Family of all teh socket taht are oging to be created
+        self.__family = None
+        # protocol of all the sockets that are going to  be created
+        self.__protocol = None
+        # Host
+        self.__address = None
+        # Ports as iter
+        self.__ports = None
+        # Results of the scan
+        self.__active_ports = []
+        # Useful for multi threading scan
+        self.__active_connections = 0
+
+    def setSocket(self, s: socket):
+        self.__family = s.family
+        self.__protocol = s.proto
+
+    def setAddress(self, address: str):
+        self.__address = address
+
+    def setPort(self, *ports):
+        self.__ports = ports
+
+    # Start the scanner
+    def start(self):
+        for port in self.__ports:
+            while self.__active_connections >= 100:
+                pass
+            Thread(target=self.connectionHandler, args=[socket(self.__family, self.__protocol), port]).start()
+        while self.__active_connections > 0:
+            pass
+        for port in self.__active_ports:
+            print('OPEN PORT', port)
+
+    def connectionHandler(self, s, target_port):
+        self.__active_connections += 1
+        try:
+            s.connect((self.__address, target_port))
+            self.__active_ports.append(target_port)
+        except:
+            pass
+        s.close()
+        del s
+        self.__active_connections -= 1
 
 
-# Transform the argument rangen "1-8" to python range "range(1,9)"
-def get_range(string_range):
-    splited_string_range = string_range.split('-')
-    return range(int(splited_string_range[0]), int(splited_string_range[1]) + 1)
+# Here we set in easy handling mode the options
+class ConfigurationHandler:
+    def __init__(self):
+        self.__host = None
+        self.__ports = None
+        # Family of the socket
+        self.__family = None
+        # Protocol of the socket
+        self.__protocol = None
+        # Time out of the socket
+        self.__timeout = None
+        self.__mode = 'Client'  # Client by default
+
+    ## Modular options
+    # Set port with -p option
+    def setports(self, ports):
+        if len(ports):
+            self.setPorts(ports)
+
+    # Set address (host) with -s option
+    def sethost(self, host):
+        if len(host):  # Do not collapse with setHost option
+            self.setHost(host)
+
+    # Set host
+    def setHost(self, host: str):
+        if len(host):
+            self.__host = host
+
+    # Set the family of the socket
+    def setFamily(self, family):
+        self.__family = family
+
+    # Set protocol of the socket: SOCK_STREAM, SOCK_DGRAM
+    def setProtocol(self, protocol):
+        self.__protocol = protocol
+
+    # Set Timeout of the socket
+    def setTimeout(self, timeout: float):
+        self.__timeout = timeout
+
+    # Set the veborse mode to print anything or print only errors
+    def setVerbose(self, value: bool):
+        if value:
+            basicConfig(level=INFO, format='%(message)s')
+        else:
+            basicConfig(level=CRITICAL, format='%(message)s')
+
+    # Set the mode to listen
+    def setModeListen(self, value: bool):
+        if value:
+            self.__mode = 'Listen'
+
+    # Set mode to scan
+    def setModeScan(self, value: bool):
+        if value:
+            self.__mode = 'Scan'
+
+    # Port setup
+    def setPorts(self, ports):
+        if len(ports):
+            ports = ports.split(',')
+            buffer = []
+            for port in ports:
+                if '-' in port:
+                    splited_port = port.split('-')
+
+                    buffer += list(range(int(splited_port[0]), int(splited_port[1])+1))
+                else:
+                    if port.isnumeric():
+                        buffer.append(int(port))
+            self.__ports = buffer
+
+    ## Function that return processed data
+    # Create the socket and return it
+    def getSocket(self):
+        s = socket(self.__family, self.__protocol)
+        s.settimeout(self.__timeout)
+        return s
+
+    # return the mode of the session
+    def getMode(self):
+        return self.__mode
+
+    # Return the address (host)
+    def getHost(self):
+        return self.__host
+
+    # Return the port or the ports to be used by the handler
+    def getPorts(self):
+        return self.__ports
 
 
-# If you want to add a new option try to di it like follows
-class Options:
-    def __init__(self, args):
-        self.__args = args
-        self.__handler = None
+# Handler for socket as client and the tunnel
+class ClientHandler:
+    def __init__(self):
+        # Socket for the server
+        self.__socket = None
+        self.__address = None
+        self.__port = None
 
-    def server_object_handler(self):
-        args = self.__args
-        self.__handler = Server(args['host'], args['port'], args['targets'], get_family(args['family']),
-                                get_protocol(args['protocol']),
-                                args['directory'], args['maxbind'], args['buffersize'], args['interval'],
-                                args['input-header'], args['formating'], defaultdata(args['defaultdata']),
-                                args['sniff'], args['logging-file'])
+    def setSocket(self, s: socket):
+        self.__socket = s
 
-    def listener(self):
-        self.server_object_handler()
-        self.__handler.reverse_connection()
+    def setAddress(self, address: str):
+        self.__address = address
 
-    def http(self):
-        self.server_object_handler()
-        self.__handler.simple_http_server()
+    def setPort(self, port):
+        self.__port = port
 
-    def proxy(self):
-        self.server_object_handler()
-        self.__handler.proxy_socket()
+    def start(self):
+        self.__socket.connect((self.__address, self.__port))
 
-    def client(self):
-        args = self.__args
-        self.__handler = Client(args['host'], args['port'], get_family(args['family']), get_protocol(args['protocol']),
-                                args['buffersize'], args['input-header'], args['formating'], args['interval'],
-                                defaultdata(args['defaultdata']), args['proxy-header'])
-        self.__handler.connect()
-
-    def scan(self):
-        args = self.__args
-        if '*' == args['host'][-1]:
-            base = '.'.join(args['host'].split('.')[:len(args['host'].split('.')) - 1])
-            for number in range(1, 256):
+    def connectionHandler(self):
+        while True:
+            # Check if we start sending
+            welcome = checkTheyFirstSend(self.__socket, self.__socket.gettimeout())
+            if welcome:
+                info(welcome.decode('utf-8'))
+            while True:
+                input_buffer = input().encode('utf-8')
+                self.__socket.sendall(input_buffer)
+                response = recv(self.__socket)
                 try:
-                    host = base + '.' + str(number)
-                    self.__handler = Scanner(host, get_family(args['family']), [args['protocol']],
-                                             get_range(args['port-range']), args['max-n-threads'])
-                    self.__handler.scan()
+                    info(response.decode('utf-8'))
                 except:
-                    pass
-        self.__handler = Scanner(args['host'], get_family(args['family']), [args['protocol']],
-                                 get_range(args['port-range']),
-                                 args['max-n-threads'])
-        self.__handler.scan()
+                    # Some kind of check to not print a file content
+                    if len(response) < 10000:
+                        info(str(response))
+
+
+# Handler for the listener
+class ServerHandler:
+    def __init__(self):
+        # Socket for the server
+        self.__socket = None
+        self.__address = None
+        self.__port = None
+
+    def setSocket(self, s: socket):
+        self.__socket = s
+
+    # Set address (host) for the socket
+    def setAddress(self, address: str):
+        self.__address = address
+
+    # Set the port of the connection
+    def setPort(self, port):
+        self.__port = port
+
+    # Enable server mode
+    def start(self):
+        self.__socket.bind((self.__address, self.__port))
+        self.__socket.listen(1)
+        try:
+            self.connectionHandler()
+        except Exception as e:
+            info(str(e))
+
+    # Handler for the server session
+    def connectionHandler(self):
+        client, address = self.__socket.accept()
+        welcome = checkTheyFirstSend(client, self.__socket.gettimeout())
+        if welcome:
+            info(welcome.decode('utf-8'))
+        while True:
+            input_buffer = input().encode('utf-8')
+            client.sendall(input_buffer)
+            response = recv(client)
+            # Try to decode and print the response
+            try:
+                info(response.decode('utf-8'))
+            except:
+                # Some kind of check to not print a file content
+                if len(response) < 10000:
+                    info(str(response))
 
 
 def main(args=None):
+    # Modes and its classes
+    modes = {'Listen': ServerHandler, 'Client': ClientHandler, 'Scan': ScannerHandler}
     if not args:
         parser = ArgumentParser()
-
-        parser.add_argument('host', help='Host to use can be ipv4 or ipv6', default='127.0.0.1')
-        parser.add_argument('port', help='Port to use', default=4444, type=int, nargs='?')
-
-        # Variables
-        # Variables can't output bools because this is the way we identify options like scan, client, proxy...
-        # if you need something similar to your new function use 0 and 1 as booleans for if statements
-        parser.add_argument('-n', '--sniff', help='Turn on sniffing for traffic of the proxy process', dest='sniff', default=0,
-                            action='store_const', const=1)
-        parser.add_argument('-N', '--logging-output', help='File to log the connections', dest='logging-file')
-        parser.add_argument('-f', '--address-family', help='IPV6 or IPV4', dest='family', default='IPV4')
-        parser.add_argument('-P', '--address-protocol', help='TCP or UDP', dest='protocol', default='TCP')
-        parser.add_argument('--default-data', help='Default data to send throught sockets', default='',
-                            dest='defaultdata')
-        parser.add_argument('-t', '--target-hosts',
-                            help='Only accept connections from this hosts (for listener and proxy)',
-                            dest='targets', type=list, nargs='*', default=[])
-        parser.add_argument('-d', '--http-directory-root', help='Base root for the http server', default='./',
-                            dest='directory')
-        parser.add_argument('-H', '--input-header', help='Like >>> when you tipe something', dest='input-header',
-                            default='>>>')
-        parser.add_argument('-i', '--input-formating',
-                            help='The formating for the input like "{}-12" => "{}".format(input())', dest='formating',
-                            default='{}')
-        parser.add_argument('-b', '--max-buffer-size', help='Size of recv buffer', default=1024, type=int,
-                            dest='buffersize')
-        parser.add_argument('-m', '--max-bind-connections', help='Max number of incoming connections', type=int,
-                            dest='maxbind',
-                            default=10)
-        parser.add_argument('-r', '--port-range', help='The port ranges for the scan default is 1-1000',
-                            default='1-1000',
-                            dest='port-range')
-        parser.add_argument('-M', '--max-threads',
-                            help='Maximum number of threads to be active at the same time in a port scanning default is 200',
-                            default=500, dest='max-n-threads', type=int)
-        parser.add_argument('-S', '--slow-send', help='Time to sleep before send a message default is 0',
-                            dest='interval',
-                            default=0, type=int)
-        parser.add_argument('-G', '--proxy-header', help='Header for the program proxy with the format: \'host;port;AF_INET/AF_INET6;SOCK_STREAM/SOCK_DGRAM\'', dest='proxy-header', default=None)
-        # Options note that only type bool count as options
-        parser.add_argument('-l', '--listener',
-                            help='Bind connection for and communicate throught socket also works for reverse connection',
-                            dest='listener', default=False,
-                            action='store_const', const=True)
-        parser.add_argument('-p', '--socket-proxy',
-                            help='Proxy with sockets send outgoing connection with the header "127.0.0.1;12;AF_INET;SOCK_STREAM":50 to make a connection betwen target and host note that you don\'t need to specify any time only in the first message',
-                            dest='proxy', const=True, default=False, action='store_const')
-        parser.add_argument('-http', '--http-server', help='Starts a http server in the address specified', dest='http',
-                            const=True,
-                            default=False, action='store_const')
-        parser.add_argument('-s', '--scan',
-                            help='Scan for ports of an specified target * at the for any target in all the range',
-                            dest='scan', const=True, default=False, action='store_const')
+        parser.add_argument('setHost', help='Set target host', nargs='?', default='')  # Implemented
+        # Port or ports for the connection or scanner
+        parser.add_argument('setPorts',
+                            help='Port[s] to be used (when is scan mode; you can set ranges like 10-50 and multi values are comma "," separated)',
+                            nargs='?', default='')
+        # Set address family
+        parser.add_argument('-6', help='Set address family to IPV6', dest='setFamily', action='store_const',
+                            const=AF_INET6, default=AF_INET)  # Implemented
+        # Set address protocol
+        parser.add_argument('-u', help='Set address protocol to UDP', dest='setProtocol', action='store_const',
+                            const=SOCK_DGRAM, default=SOCK_STREAM)  # Implemented
+        # Server mode
+        parser.add_argument('-l', '--listen', help='Listen for incoming connections', dest='setModeListen',
+                            action='store_const', const=True, default=False)  # Implemented
+        # Verbose mode
+        parser.add_argument('-v', '--verbose', help='Verbose mode', dest='setVerbose', action='store_const', const=True,
+                            default=False)  # Implemented
+        # Timeout limit for connections
+        parser.add_argument('-w', '--wait', help='Connection timeout', dest='setTimeout', default=3600,
+                            type=float)  # Implemented
+        # Set port[s] with an option
+        parser.add_argument('-p', '--port', dest='setports', help='Set the port or  ports to be processed',
+                            default='')  # Implemented
+        # Set address (host) with an option
+        parser.add_argument('-s', '--address', dest='sethost', help='Set host to be processed with an option',
+                            default='')
+        # Enable scanner mode
+        parser.add_argument('-z', '--scan', dest='setModeScan', help='Set mode to scan', action='store_const',
+                            const=True, default=False)
         args = vars(parser.parse_args())
-    o = Options(args)
-    reversed_keys = list(reversed(list(args.keys())))
-    for key in reversed_keys:
-        if type(args[key]) == bool:
-            if args[key]:
-                getattr(o, key)()
-                exit(-1)
-    getattr(o, 'client')()
+    c = ConfigurationHandler()
+    for key in args:
+        getattr(c, key)(args[key])
+    s = c.getSocket()
+    mode = c.getMode()
+    host = c.getHost()
+
+    # Select one of the handlers; corresponding to the user options
+    handler = modes[mode]()
+    # Set the host target to the handler
+    handler.setAddress(host)
+    # Set the socket to be used by the handler
+    handler.setSocket(s)
+    handler.setPort(*c.getPorts())
+    handler.start()
 
 
 if __name__ == '__main__':
