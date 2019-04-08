@@ -1,5 +1,6 @@
 require 'socket'
 require 'timeout'
+require 'optparse'
 # Better recv function
 def recv s
   buf = ''
@@ -35,7 +36,7 @@ def create_socket host, port, mode='client'
   s
 end
 
-def tunnel_communication_handler local_socket, target_socket
+def tunnel_communication_handler client, target_socket
   while true
     msg = recv(client)
     if msg
@@ -48,17 +49,44 @@ def tunnel_communication_handler local_socket, target_socket
   end
 end
 
-def start
-  local_socket = create_socket'192.168.0.19', 4444, 'server'
-  target_socket = create_socket '127.0.0.1', 1235
+# target_address is the one to be forwarded
+# Local address is the one only this machine have access
+def start target_address, local_address
+  target_socket = create_socket *target_address, 'server'
+  local_socket = create_socket *local_address
   while true
-    begin
-      client = local_socket.accept
+    begin # if the connection dies, repeat again
+      client = target_socket.accept
       puts client.port
-      tunnel_communication_handler client, target_socket
+      # Start the communication
+      tunnel_communication_handler client, local_socket
     rescue
       nil
     end
   end
 end
-start
+def main args=[]
+  parser = OptionParser.new('Usage tunnel.rb [target-host] [target-port] [local-host] [local-port]')
+  parser.on('-h', '--help') do
+    puts parser
+    puts
+    puts "----------------------------Definitions---------------------------------"
+    puts "target-host     Host to send the data\n"\
+         "target-port     Port of the target-host\n"\
+         "local-host      Host that typcaly only  can be access by this machine\n"\
+         "local-port      Port of local-host"
+    return
+  end.parse!
+  if args.length < 4
+    args = ARGV
+  end
+  if args.nil?
+    puts "Wrong number of arguments"
+    return
+  end
+  target_address = args[0...2]
+  local_address  = args[2...]
+  puts target_address
+  puts local_address
+end
+main
