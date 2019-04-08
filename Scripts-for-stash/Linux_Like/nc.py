@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from logging import basicConfig, info, INFO, CRITICAL
 from threading import Thread
 
+
 ## Options for implement
 ## Tunnel
 # -P tunneling port
@@ -30,9 +31,12 @@ def checkTheyFirstSend(client, timeout):
         client.settimeout(timeout)
         return False
 
+
 # Handler for the connection tunnel
 class TunnelHandler:
     pass
+
+
 # Handler for the scanner
 class ScannerHandler:
     def __init__(self):
@@ -67,14 +71,13 @@ class ScannerHandler:
             Thread(target=self.connectionHandler, args=[socket(self.__family, self.__protocol), port]).start()
         while self.__active_connections > 0:
             pass
-        for port in self.__active_ports:
-            print('OPEN PORT', port)
 
     def connectionHandler(self, s, target_port):
         self.__active_connections += 1
         try:
             s.connect((self.__address, target_port))
             self.__active_ports.append(target_port)
+            info(f'OPEN PORT {target_port}')
         except:
             pass
         s.close()
@@ -85,7 +88,7 @@ class ScannerHandler:
 # Here we set in easy handling mode the options
 class ConfigurationHandler:
     def __init__(self):
-        self.__host = None
+        self.__host = ''
         self.__ports = None
         # Family of the socket
         self.__family = None
@@ -149,7 +152,7 @@ class ConfigurationHandler:
                 if '-' in port:
                     splited_port = port.split('-')
 
-                    buffer += list(range(int(splited_port[0]), int(splited_port[1])+1))
+                    buffer += list(range(int(splited_port[0]), int(splited_port[1]) + 1))
                 else:
                     if port.isnumeric():
                         buffer.append(int(port))
@@ -194,6 +197,7 @@ class ClientHandler:
 
     def start(self):
         self.__socket.connect((self.__address, self.__port))
+        self.connectionHandler()
 
     def connectionHandler(self):
         while True:
@@ -301,7 +305,6 @@ def main(args=None):
     s = c.getSocket()
     mode = c.getMode()
     host = c.getHost()
-
     # Select one of the handlers; corresponding to the user options
     handler = modes[mode]()
     # Set the host target to the handler
@@ -311,6 +314,8 @@ def main(args=None):
     handler.setPort(*c.getPorts())
     handler.start()
 
-
-if __name__ == '__main__':
-    main()
+try:
+    if __name__ == '__main__':
+        main()
+except Exception as e:
+    print(e)
