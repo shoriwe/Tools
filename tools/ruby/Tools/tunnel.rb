@@ -27,9 +27,9 @@ end
 # Create sockets
 def create_socket host, port, mode='client'
   if mode == 'server'
-    s = TCPServer.new(host, port)
+    s = TCPServer.new(host, port.to_i)
   else
-    address = Socket.pack_sockaddr_in(port, host)
+    address = Socket.pack_sockaddr_in(port.to_i, host)
     s = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM)
     s.connect(address)
   end
