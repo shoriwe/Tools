@@ -13,7 +13,7 @@ Scripts that are extensions for the Pythonista Editor
 This scripts approach Pykeys feature; this folder have some interesting shortcuts
 
 # tools
-Tools like linux command and my ones
+Tools like linux command and my ones `writed` in Ruby and `Python`
 ## Linux_Like
 All the scripts in this folder are implementations (not really 100% implementations  but nearly)
 of Linux commands/functions like `ls`, `wget`, `nc`, `strings`, `grep`...
