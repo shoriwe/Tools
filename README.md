@@ -1,4 +1,4 @@
-# Pythonista-scripts
+# Tools
 
 # Description
 Scripts, extensions, shortcuts and implementations for Pythonista app
