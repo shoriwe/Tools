@@ -7,20 +7,24 @@ def recv s
   while true
     data = ''
     begin
-      data = Timeout::timeout(0.1){
+      data = Timeout::timeout(5){
       s.recv(1024)
     }
+    # When all goes wrong
     rescue
+      # if we got at least some of the data
       if buf.length > 0
         buf
+      # We could not get any amount of data
       else
         false
       end
     end
-
+    # If all goes well return the buffer
     if data.length < 1024
       return buf + data
     end
+    # Increase the buffer
     buf += data
   end
 end
@@ -28,6 +32,7 @@ end
 def create_socket host, port, mode='client'
   if mode == 'server'
     s = TCPServer.new(host, port.to_i)
+    s.listen 1
   else
     address = Socket.pack_sockaddr_in(port.to_i, host)
     s = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM)
@@ -36,13 +41,19 @@ def create_socket host, port, mode='client'
   s
 end
 
-def tunnel_communication_handler client, target_socket
+def tunnel_communication_handler client, local_socket
+  # The welcome message
+  welcome = recv(local_socket)
+  if welcome # If  the server send a welcome message
+    client.send welcome, 0
+  end
   while true
+    # Client of the target host recv first
     msg = recv(client)
     if msg
-      target_socket.send msg, 0
+      local_socket.send msg, 0
     end
-    response = recv(target_socket)
+    response = recv(local_socket)
     if response
       client.send response, 0
     end
@@ -57,7 +68,6 @@ def start target_address, local_address
   while true
     begin # if the connection dies, repeat again
       client = target_socket.accept
-      puts client.port
       # Start the communication
       tunnel_communication_handler client, local_socket
     rescue
@@ -73,7 +83,7 @@ def main args=[]
     puts "----------------------------Definitions---------------------------------"
     puts "target-host     Host to send the data\n"\
          "target-port     Port of the target-host\n"\
-         "local-host      Host that typcaly only  can be access by this machine\n"\
+         "local-host      Host that typically only  can be access by this machine\n"\
          "local-port      Port of local-host"
     return
   end.parse!
@@ -86,7 +96,6 @@ def main args=[]
   end
   target_address = args[0...2]
   local_address  = args[2...]
-  puts target_address
-  puts local_address
+  start target_address, local_address
 end
 main

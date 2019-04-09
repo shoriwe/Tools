@@ -2,38 +2,32 @@ from socket import socket, AF_INET, SOCK_STREAM
 from re import match
 from argparse import ArgumentParser
 
+
 # Printer for responses
 def print_response(response):
     if response:
         print(response.decode())
 
+
 # Find every file in a list like the one of "ls" command
-def find_posible_file(pattern, ls_list): # NOT IMPLEMENTED
+def find_posible_file(pattern, ls_list):  # NOT IMPLEMENTED
     m = match(pattern, ls_list)
 
+
 # Get command/code and args
-def getCodeCommand(cmd):
+def getCodeOrCommand(cmd):
     return cmd.split(' ')
+
 
 # Handler for the FTP session
 class FTPHandler:
-    def __init__(self):
-        self.__host = None
-        self.__port = None
+    def __init__(self, address, client):
+        self.__host, self.__port = address
 
-        self.__client = None  # Socket for command communication
+        self.__client = client  # Socket for command communication
         self.__logged_in = False  # Useful handler to limit the client and prevent crash by not executing certain cmds before we are logged in
         self.__timeout = 1  # The timeout for the recv
         self.__is_active = False
-
-    # Set host and port
-    def setHostPort(self, host, port):
-        self.__host = host
-        self.__port = port
-
-    # Set the command client
-    def setClient(self, client):
-        self.__client = client
 
     # Passive eFTP connection
     def __pasv(self):
@@ -41,7 +35,7 @@ class FTPHandler:
         # Receive port to connect
         cmd = self.__recv(self.__client).decode()
         # Separate the  args from the PORT command
-        code, *args = getCodeCommand(cmd)
+        code, *args = getCodeOrCommand(cmd)
         # When the server have implemented it
         pre_port = args[-1].replace('(', '').replace(')', '').replace('.', '').strip().split(',')
         port = int(pre_port[4]) * 256 + int(pre_port[5])
@@ -51,6 +45,45 @@ class FTPHandler:
         data_client.connect(address)
         return data_client
 
+    # get command from string
+    def __getCommandString(self, cmd):
+        try:
+            return getattr(self, cmd)
+        except:
+            return None
+
+    # Recieve data of any size
+    def __recv(self, client):
+        if client is not None:
+            client.settimeout(self.__timeout)
+            try:
+                buffer = b''
+                while True:
+                    data = client.recv(1024)
+                    if len(data) < 1024:
+                        # data send loop completed
+                        client.settimeout(3600)
+                        return buffer + data
+                    buffer += data
+            except Exception as e:
+                client.settimeout(3600)
+                return None
+
+    # Check the code of the response
+    def __check_code(self, msg):
+        codes = {'231': "QUIT", '221': "QUIT", '214': 'SUCCESSFUL', '230': 'LOGGED', '500': 'ERROR',
+                 '200': 'SUCCESSFUL'}
+        code = msg[:3]
+        if code in ['221', '231']:
+            exit(-1)
+        elif code == '230':
+            self.__logged_in = True
+        elif code[0] == '5':
+            return False
+        else:
+            return True
+
+    ## Add more function bellow here
     # Best way to use LIST command
     def ls(self, args, return_list=False):
         data_client = self.__pasv()
@@ -66,6 +99,7 @@ class FTPHandler:
             print_response(self.__recv(self.__client))
 
     # Download a file using RETR
+    ## Implement the retr and wait for data in the data_client port
     def retr(self, args):
         data_client = self.__pasv()
         msg = f"RETR {args[0]}\r\n".encode()
@@ -87,50 +121,12 @@ class FTPHandler:
                         file.close()
         data_client.close()
 
-    # Equivalent to get from FTP client
+    # Equivalent to get from FTP client in linux
     def get(self, args):
         self.retr(args)
 
     def mget(self, args):
         print("NOT IMPLEMENTED YET")
-
-    # get command from string
-    def __getCommand(self, cmd):
-        try:
-            return getattr(self, cmd)
-        except:
-            return None
-
-    # Recieve data of any size
-    def __recv(self, client):
-        if client != None:
-            client.settimeout(self.__timeout)
-            try:
-                buffer = b''
-                while True:
-                    data = client.recv(1024)
-                    if len(data) < 1024:
-                        # data send loop completed
-                        client.settimeout(3600)
-                        return (buffer + data)
-                    buffer += data
-            except Exception as e:
-                client.settimeout(3600)
-                return None
-
-    # Check the code of the response
-    def __check_code(self, msg):
-        codes = {'231': "QUIT", '221': "QUIT", '214': 'SUCCESSFUL', '230': 'LOGGED', '500': 'ERROR',
-                 '200': 'SUCCESSFUL'}
-        code = msg[:3]
-        if code in ['221', '231']:
-            exit(-1)
-        elif code == '230':
-            self.__logged_in = True
-        elif code[0] == '5':
-            return False
-        else:
-            return True
 
     # Start the connection
     def start_connection(self):
@@ -138,13 +134,18 @@ class FTPHandler:
         print(welcome.strip())
         while True:
             msg = input('ftp>')
+            # If not data will be send, send NOOP command (no operation)
             if not len(msg):
-                msg = ' '
+                msg = 'NOOP'
+            # Separate authenticated session of not ayth session
+            ## this let us to except an y socket block during the session
             if self.__logged_in:
-                cmd, *args = getCodeCommand(msg)
-                commandFunction = self.__getCommand(cmd)  # Method/Function of the string
-                if commandFunction:
-                    commandFunction(args) # Execute one implemented command
+                cmd, *args = getCodeOrCommand(msg)
+                commandFunction = self.__getCommandString(cmd.lower())  # Method/Function of the string
+                # Only execute command if is one of the allowed
+                if commandFunction and cmd != 'start_connection':
+                    commandFunction(args)  # Execute one implemented command
+                # if no command have been found only send it raw
                 else:
                     # Client for sending all the data (data port)
                     data_client = self.__pasv()
@@ -153,12 +154,14 @@ class FTPHandler:
                     response1 = self.__recv(self.__client)
                     if response1:
                         print(response1.decode().strip())
+                        # Only try to print the other responses if we got a successful code as response
                         if self.__check_code(response1.decode()):
                             print_response(self.__recv(data_client))
                             print_response(self.__recv(self.__client))
                     data_client.close()
 
             else:
+                # Simple socket communication for not authenticated session
                 msg = (msg + '\r\n').encode()
                 self.__client.send(msg)
                 response = self.__recv(self.__client).decode()
@@ -189,9 +192,9 @@ class FTP:
     # Start the client after setting up everything
     def start(self):
         self.__create_client()
-        handler = FTPHandler()
-        handler.setClient(self.__client)
-        handler.setHostPort(self.__host, self.__port)
+        # Create the handlerr for the session
+        handler = FTPHandler((self.__host, self.__port), self.__client)
+        # Start the handler
         handler.start_connection()
 
 
@@ -205,5 +208,7 @@ def main(args=None):
     for key in args.keys():
         getattr(ftp, key.lower())(args[key])
     ftp.start()
+
+
 if __name__ == '__main__':
     main()
