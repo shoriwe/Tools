@@ -1,31 +1,27 @@
 require 'socket'
 require 'timeout'
 require 'optparse'
+
+$debug = false
 # Better recv function
 def recv s
   buf = ''
   while true
-    data = ''
     begin
-      data = Timeout::timeout(5){
+      data = Timeout::timeout(2){
       s.recv(1024)
     }
-    # When all goes wrong
-    rescue
-      # if we got at least some of the data
-      if buf.length > 0
-        buf
-      # We could not get any amount of data
-      else
-        false
+      # If all goes well return the buffer
+      if data.length < 1024
+        return buf + data
       end
+      # Add the data to the buffer
+      buf += data
+    # Return false if the time out is done
+    rescue
+      false
+
     end
-    # If all goes well return the buffer
-    if data.length < 1024
-      return buf + data
-    end
-    # Increase the buffer
-    buf += data
   end
 end
 # Create sockets
@@ -41,10 +37,13 @@ def create_socket host, port, mode='client'
   s
 end
 
-def tunnel_communication_handler client, local_socket
+def tunnel_communication_handler client, local_socket, local_addrs
   # The welcome message
   welcome = recv(local_socket)
   if welcome # If  the server send a welcome message
+    if $debug
+      puts "Welcome msg -> #{welcome}"
+    end
     client.send welcome, 0
   end
   while true
@@ -52,10 +51,16 @@ def tunnel_communication_handler client, local_socket
     msg = recv(client)
     if msg
       local_socket.send msg, 0
+      if $debug
+        puts "MSG from #{client.addr[1...3]} -> #{msg}"
+      end
     end
     response = recv(local_socket)
     if response
       client.send response, 0
+      if $debug
+        puts "Response from #{local_addrs} -> #{response}"
+      end
     end
   end
 end
@@ -64,19 +69,34 @@ end
 # Local address is the one only this machine have access
 def start target_address, local_address
   target_socket = create_socket *target_address, 'server'
+  if $debug
+    puts "Listener created at #{target_address}"
+  end
   local_socket = create_socket *local_address
+  if $debug
+    puts "Connection stablished with #{local_address.reverse}"
+  end
   while true
     begin # if the connection dies, repeat again
       client = target_socket.accept
+      if $debug
+        puts "Accepted connection from #{client.addr[1...3]}"
+      end
       # Start the communication
-      tunnel_communication_handler client, local_socket
+      tunnel_communication_handler client, local_socket, local_address.reverse
     rescue
       nil
     end
   end
 end
+
+# Start function
 def main args=[]
-  parser = OptionParser.new('Usage tunnel.rb [target-host] [target-port] [local-host] [local-port]')
+
+  parser = OptionParser.new('Usage:   ruby tunnel.rb options [target-host] [target-port] [local-host] [local-port]')
+  parser.on('-v', '--verbose') do
+    $debug = true
+  end
   parser.on('-h', '--help') do
     puts parser
     puts
