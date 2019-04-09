@@ -1,4 +1,4 @@
-from socket import socket, AF_INET, SOCK_STREAM
+from socket import socket, AF_INET, AF_INET6, SOCK_STREAM
 from re import match
 from argparse import ArgumentParser
 
@@ -174,7 +174,12 @@ class FTP:
     def __init__(self):
         self.__host = None
         self.__port = None
+        self.__family = None
         self.__client = None
+
+    # SEt the familyof the command socket
+    def setfamily(self, family):
+        self.__family = family
 
     # Set host
     def host(self, host):
@@ -186,7 +191,7 @@ class FTP:
 
     # Create connection
     def __create_client(self):
-        self.__client = socket(AF_INET, SOCK_STREAM)
+        self.__client = socket(self.__family, SOCK_STREAM)
         self.__client.connect((self.__host, self.__port))
 
     # Start the client after setting up everything
@@ -203,6 +208,7 @@ def main(args=None):
         parser = ArgumentParser()
         parser.add_argument('HOST', help='HOST IP')
         parser.add_argument('PORT', help='PORT of the FTP server', default=21, type=int)
+        parser.add_argument('-6', dest='setfamily', help='User IPV6', action='store_const', const=AF_INET6, default=AF_INET)
         args = vars(parser.parse_args())
     ftp = FTP()
     for key in args.keys():
