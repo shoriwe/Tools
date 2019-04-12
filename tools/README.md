@@ -14,6 +14,7 @@ Scripts  that implement linux commands or are only useful
 |`netcat.py`|Inspired by Linux "netcat" command line program|"http://netcat.sourceforge.net/"|
 |`find.py`|Inspired by Linux "find" command|"http://man7.org/linux/man-pages/man1/find.1.html"|
 |`ftp.py`|Inspired in the linux command ftp|"https://linux.die.net/man/1/ftp"|
+|`rm.py`|Inspired by rm Linux command|"http://man7.org/linux/man-pages/man1/rm.1.html"|
 # Programs
 This scripts implement programs or nearly try to do it
 |`nmap.py`|Inspired in the nmap scan program|"https://nmap.org/"|
