@@ -53,9 +53,14 @@ class ScannerHandler:
         # Useful for multi threading scan
         self.__active_connections = 0
 
+    # Get reference information for the creation of each socket thread
     def setSocket(self, s: socket):
+        # Get the socket family
         self.__family = s.family
-        self.__protocol = s.proto
+        # Get the socket protocol
+        self.__protocol = s.type
+        # Close the socket because we only need from it the family and protocol
+        s.close()
 
     def setAddress(self, address: str):
         self.__address = address
@@ -313,6 +318,7 @@ def main(args=None):
     handler.setSocket(s)
     handler.setPort(*c.getPorts())
     handler.start()
+
 
 try:
     if __name__ == '__main__':
