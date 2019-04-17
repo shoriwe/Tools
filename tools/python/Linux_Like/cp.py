@@ -116,8 +116,18 @@ class CPHandler:
             temporary_name = str(hash(self.__dest) - hash(self.__source))[1:]
             # Temporal archive path
             archive_name = join(temporal_location, temporary_name)
+            splited_source = self.__source.split('/')
+            # Root directory
+            root_dir = self.__source[:len(self.__source) - len(splited_source[-1])]
+            # base Directory
+            base_dir = splited_source[-1]
+            # Check for anu error in root and base
+            if not len(root_dir):
+                root_dir = '.'
+            if not len(base_dir):
+                base_dir = '.'
             # Make a archive of the source directory
-            make_archive(archive_name, archive_format, self.__source, self.__source, verbose=self.__verbose, )
+            make_archive(archive_name, archive_format, root_dir, base_dir, verbose=self.__verbose, )
             # When the format wanted is not zip or tar
             if len(archive_format) > 3:
                 archive_format = f'tar.{archive_format[:2]}'
@@ -149,20 +159,22 @@ def main(args=None):
         parser.add_argument('-a', '--archive',
                             help='Create archive of a folder in any of this formats (zip,tar,tar.gz,tar.xz,tar.bz)',
                             action='store_const', const=True, default=False, dest='archive')
-        parser.add_argument('-t', '--target-directory', help='Use the destination as a folder for all the source files', action='store_const',
+        parser.add_argument('-t', '--target-directory', help='Use the destination as a folder for all the source files',
+                            action='store_const',
                             const=True, default=False, dest='setTargetDirectory')
         parser.add_argument('-v', '--verbose', dest='setVerbose', help='Set verbose mode', action='store_const',
                             const=True, default=False)
-        parser.add_argument('--preserve', dest='setPreserve',help='Preserve all metadata of source[s]',action='store_const',
+        parser.add_argument('--preserve', dest='setPreserve', help='Preserve all metadata of source[s]',
+                            action='store_const',
                             const=True, default=False)
 
         args = vars(parser.parse_args())
     # Handler
     cp_command = CPHandler()
     # Source[s]
-    source = args['Source']
+    cp_command.Source(args['Source'])
     # Dest[s]
-    dest = args['Dest']
+    cp_command.Dest(args['Dest'])
     # Delete non necessary keys
     del args['Source'], args['Dest']
     # Set cpy function to use
@@ -178,5 +190,7 @@ def main(args=None):
             getattr(cp_command, key)(args[key])
     # Set all variables
     copy_function()
+
+
 if __name__ == '__main__':
     main()

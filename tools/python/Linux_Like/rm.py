@@ -3,12 +3,14 @@ from os.path import join, isdir
 from logging import INFO, basicConfig, info
 from argparse import ArgumentParser
 from sys import platform
+
+
 # Handler for the rm operation
 class RM:
     def __init__(self):
         # Interactive function to use
         # By default always remove file without asking
-        self.__interctive = lambda x:True
+        self.__interctive = lambda x: True
         # File to be removed
         self.__file = None
         # is the file a folder?
@@ -26,31 +28,38 @@ class RM:
         self.__preserve = None
         self.__base = None
         self.__base_list = None
+
     # Set the file that is going to be erased
     def setFile(self, filename):
         self.__file = filename
+
     # Put intercative funtion intervals
     def setInterval(self, interval):
         self.__interval_limit = interval
         self.__interctive = self.interval
+
     # Put the intercative function as complete interactive
     def setInteractive(self, value):
         if value:
             self.__interctive = self.interactive
+
     # Set verbose mode
     def setVerbose(self, value):
         if value:
             basicConfig(level=INFO, format='%(message)s')
+
     # Set if the target is a directory
     def setIsDirectory(self, value):
         if value:
             self.__is_file_folder = True
+
     # Set the function to remove the file
     def setRecursive(self, value):
         if value:
             self.__remove_function = self.recursive
         else:
             self.__remove_function = self.normal_remove
+
     # Preserve the base "/" or "C:/"
     def setPreservation(self, value):
         if not value:
@@ -69,13 +78,15 @@ class RM:
 
     # Check if the given file is the root or not to preserve it
     def checkIfPreserve(self, file):
-        if file == self.__base:
-            return True and self.__preserve
-        else:
-            if listdir(file) == self.__base_list:
+        if isdir(file):
+            if file == self.__base:
                 return True and self.__preserve
             else:
-                return False and self.__preserve
+                if listdir(file) == self.__base_list:
+                    return True and self.__preserve
+                else:
+                    return False and self.__preserve
+
     ## Interactive functions
     def interactive(self, file):
         option = input(f'Remove {file} (Y/n)')
@@ -83,6 +94,7 @@ class RM:
             return True
         else:
             return False
+
     # Interactive but with a inteerval between files
     def interval(self, file):
         if self.__interval_memory == self.__interval_limit:
@@ -90,6 +102,7 @@ class RM:
             return self.interactive(file)
         self.__interval_memory += 1
         return True
+
     ## Removing functions
     # Normal removal of aa file
     def normal_remove(self):
@@ -105,10 +118,11 @@ class RM:
                 else:
                     try:
                         file = self.__file.replace('\\', '/')
-                        rmdir(file)
+                        remove(file)
                         info(f"Removed {file}")
                     except Exception as e:
                         info(str(e))
+
     def start(self):
         self.__remove_function()
 
@@ -137,7 +151,7 @@ class RM:
                     if self.__interctive(join(path, file).replace('\\', '/')):
                         try:
 
-                            file =  join(path, file).replace('\\', '/')
+                            file = join(path, file).replace('\\', '/')
                             remove(file)
                             info(f"Removed {file}")
                         except Exception as e:
@@ -152,17 +166,25 @@ class RM:
                 info(f"Removed {file}")
             except Exception as e:
                 info(str(e))
+
+
 # Main function to execute rm
 def main(args=None):
     if not args:
         parser = ArgumentParser()
         parser.add_argument('setFile')
-        parser.add_argument('-d', '--dir', help='Specify that the target is a empty directory', dest='setIsDirectory', action='store_const', const=True, default=False)
-        parser.add_argument('-i', help='Always as for permission to delete a file', dest='setInteractive', action='store_const', const=True, default=False)
-        parser.add_argument('-I', help='-I INTERVAL Ask for permission every n files deleted', dest='setInterval', type=int)
-        parser.add_argument('-r', '-R', help='Recursive delete of a folder', dest='setRecursive', action='store_const', const=True, default=False)
-        parser.add_argument('-v', '--verbose', help='Set mode to verbose show every action', dest='setVerbose', action='store_const', const=True, default=False)
-        parser.add_argument('--no-preserve-root', help='Do not preserver the base; by default this is inactive', dest='setPreservation', action='store_const', const=False, default=True)
+        parser.add_argument('-d', '--dir', help='Specify that the target is a empty directory', dest='setIsDirectory',
+                            action='store_const', const=True, default=False)
+        parser.add_argument('-i', help='Always as for permission to delete a file', dest='setInteractive',
+                            action='store_const', const=True, default=False)
+        parser.add_argument('-I', help='-I INTERVAL Ask for permission every n files deleted', dest='setInterval',
+                            type=int)
+        parser.add_argument('-r', '-R', help='Recursive delete of a folder', dest='setRecursive', action='store_const',
+                            const=True, default=False)
+        parser.add_argument('-v', '--verbose', help='Set mode to verbose show every action', dest='setVerbose',
+                            action='store_const', const=True, default=False)
+        parser.add_argument('--no-preserve-root', help='Do not preserver the base; by default this is inactive',
+                            dest='setPreservation', action='store_const', const=False, default=True)
         args = vars(parser.parse_args())
     # Handler
     rm = RM()
@@ -170,5 +192,7 @@ def main(args=None):
     for key in args.keys():
         getattr(rm, key)(args[key])
     rm.start()
+
+
 if __name__ == '__main__':
     main()
