@@ -130,23 +130,20 @@ end
 # main function to execute it
 def main
   # Arguments base to be use for reference
-  args = {:hash_function => 'md5',:compare => false, :hash => nil, :file => nil}
+  args = {:hash_function => 'sha1',:compare => false, :hash => nil, :file => nil, :output_file => nil}
   # Options to be parsed
   opt = OptionParser.new
-  opt.banner = "Checksum handler"
-  opt.on("-c", "--compare", "Set the mode to compare") do
+  opt.banner = "Checksum handler; Usage: checksum.rb <options> FILE"
+  opt.on("-c", "--compare HASH/HASHDB", "Set the mode to compare an input hash with the FILE or to compare all hashes of the with all file inside it") do
     args[:compare] = true
   end
-  opt.on("-H", "--hash raw_hash/file", "Raw hash or csv db with path and hashes to compare with (in compare mode) or to write (in checksum mode)") do |value|
-    args[:hash] = value
-  end
-  opt.on("-f", "--file output_file/reference", "File in checksum mode is for checksum;  in compare mode is to compare with a raw hash") do |value|
-    args[:file] = value
+  opt.on("-o", "--output-file FILENAME", "Output file for the checksum (csv)") do |value|
+    args[:output_file] = value
   end
   opt.on('-5', "--md5", "Use MD5 algorithm") do
     args[:hash_function] = "md5"
   end
-  opt.on('-1', '--sha1', 'Use SHA1 algorithm') do
+  opt.on('-1', '--sha1', 'Use SHA1 algorithm (Set by default)') do
     args[:hash_function] = 'sha1'
   end
   opt.on('-2', '--sha2', 'Use SHA2 algorithm') do
@@ -156,18 +153,18 @@ def main
     puts opt
     return
   end.parse!
-
+  # Get the FILE variable
+  args[:file] = ARGV.pop
   # If the mode is set to compare
   begin
     if args[:compare]
-      compare_hashes_handler args[:hash], args[:file], args[:hash_function]
+      compare_hashes_handler args[:compare], args[:file], args[:hash_function]
     else
-      checksum_handler args[:file], args[:hash], args[:hash_function]
+      checksum_handler args[:file], args[:output_file], args[:hash_function]
     end
   rescue
     puts opt
   end
-
 end
 
 main
