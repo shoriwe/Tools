@@ -1,9 +1,7 @@
 # Description
 Most of the scripts here are implementation of Linux default commands and
 many others are for made completely by my or inspired in scripts inside books.
-## Python
-Python 3 scripts
-# Scripts
+
 Scripts  that implement linux commands or are only useful
 |Lenguage|Type|Script|Inspired/Implementation of|Reference url|
 | --- | --- | --- | --- | --- |
