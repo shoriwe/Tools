@@ -17,10 +17,13 @@ Scripts  that implement linux commands or are only useful
 |`rm.py`|Inspired by rm Linux command|"http://man7.org/linux/man-pages/man1/rm.1.html"|
 # Programs
 This scripts implement programs or nearly try to do it
+|script|inspired/implementation_of|reference_url|
+| --- | --- | --- |
 |`nmap.py`|Inspired in the nmap scan program|"https://nmap.org/"|
 ## Ruby
 Scripts and programs using Ruby 2.6.1p33
 # Tools
+|script|inspired/implementation_of|reference_url|
 | --- | --- | --- |
 |`gobuster.rb`|Light implementation of gobuster|"https://github.com/OJ/gobuster"|
 |`bruteftp.rb`|FTP Brute force script also check `user:)`|My own|
