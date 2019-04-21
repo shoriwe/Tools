@@ -5,7 +5,7 @@ many others are for made completely by my or inspired in scripts inside books.
 Python 3 scripts
 # Scripts
 Scripts  that implement linux commands or are only useful
-|script|inspired/implementation_of|reference_url|
+`|script|inspired/implementation_of|reference_url|`
 | :---: | :---: | :---: |
 |`ls.py`|Inspired by Linux "ls" command|"http://man7.org/linux/man-pages/man1/ls.1.html"|
 |`strings.py`|Inspired by Linux "strings" command|"http://man7.org/linux/man-pages/man1/strings.1.html"|
