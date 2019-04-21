@@ -24,3 +24,4 @@ Scripts and programs using Ruby 2.6.1p33
 |`gobuster.rb`|Light implementation of gobuster|"https://github.com/OJ/gobuster"|
 |`bruteftp.rb`|FTP Brute force script also check `user:)`|My own|
 |`tunnel.rb`|Local tunneling port forwarding, need to be executed in the server side|My own|
+|`checksum.rb`|Checksum tool for check and make them|My own|
