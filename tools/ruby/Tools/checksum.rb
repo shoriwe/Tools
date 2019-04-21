@@ -158,11 +158,16 @@ def main
   end.parse!
 
   # If the mode is set to compare
-  if args[:compare]
-    compare_hashes_handler args[:hash], args[:file], args[:hash_function]
-  else
-    checksum_handler args[:file], args[:hash], args[:hash_function]
+  begin
+    if args[:compare]
+      compare_hashes_handler args[:hash], args[:file], args[:hash_function]
+    else
+      checksum_handler args[:file], args[:hash], args[:hash_function]
+    end
+  rescue
+    puts opt
   end
+
 end
 
 main
