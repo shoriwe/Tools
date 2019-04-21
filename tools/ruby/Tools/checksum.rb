@@ -134,8 +134,8 @@ def main
   # Options to be parsed
   opt = OptionParser.new
   opt.banner = "Checksum handler; Usage: checksum.rb <options> FILE"
-  opt.on("-c", "--compare HASH/HASHDB", "Set the mode to compare an input hash with the FILE or to compare all hashes of the with all file inside it") do
-    args[:compare] = true
+  opt.on("-c", "--compare HASH/HASHDB", "Set the mode to compare an input hash with the FILE or to compare all hashes of the with all file inside it") do |value|
+    args[:compare] = value
   end
   opt.on("-o", "--output-file FILENAME", "Output file for the checksum (csv)") do |value|
     args[:output_file] = value
