@@ -53,7 +53,10 @@ def getsize_join(folder):
 
     def size_of(file):
         try:
+            # Size to be processed (if it's division with 1024 is >= 1 )
             size = get_size_of(join(folder, file))
+            # File size as bytes this is useful for the size ordered function
+            bytes_size = size
             str_size = str(size)[:6]
             for number, metric in enumerate(size_table):
                 if size < 100:
@@ -62,8 +65,8 @@ def getsize_join(folder):
                             str_size += '.'
                     while len(str_size) < 6:
                         str_size += '0'
-                    return [size * (1000 * number + 1), str_size, metric]
-                size = size / 1000
+                    return [bytes_size, str_size, metric]
+                size = size / 1024
                 str_size = str(size)[:6]
         except:
             return [0, 'UNKNOW', '  ']
@@ -194,7 +197,7 @@ class Ls:
 
     # -d --directory
     def directory(self):
-        self.__files = [self.__folder, getsize(self.__folder)]
+        self.__files = [['.', getsize_join(self.__folder)('./')]]
         self.__folder = ''
         self.__processable = True
 
