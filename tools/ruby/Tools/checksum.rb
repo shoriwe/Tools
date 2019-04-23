@@ -19,56 +19,56 @@ def checksum(file_path, hash_class)
     hash.update content
   end
 end
-# Write the results to database
-def write_to_db(hash_db, content)
-  file = File.open(hash_db, 'w')
-  file.write content
-  file.close
-end
 # get all hashes checksum from the content of a folder
-def recursive_get_content(directory_path, hash_class)
-  # content buffer
-  content = ""
-  # Object to hand the directory
-  directory_object = Dir.open directory_path
-  base_path = File.expand_path directory_path
+def recursive_get_content(_path, hash_class, file_object, debugmode)
+  # When the file is a directory be recursive
+  if File.directory? _path
+    # Object to hand the directory
+    directory_object = Dir.open _path
+    base_path = File.expand_path _path
   # Process all files in directory
-  directory_object.each_child do |child|
-    # Child to be processed
-    child_path = File.join base_path, child
-    # When is a directory go recursive
-    if File.directory? child_path
-      content += "#{recursive_get_content child_path, hash_class}"
-    else
-      # When it is aa file
-      content += "#{child_path},#{checksum child_path, hash_class}\n"
+    directory_object.each_child do |child|
+      # Child to be processed
+      child_path = File.join base_path, child
+
+      recursive_get_content child_path, hash_class, file_object, debugmode
     end
+  else
+      # When it is aa file write directly to file_object or print it
+      content = "#{File.expand_path _path},#{checksum _path, hash_class}"
+      # Debug mode prints every file hash
+      if debugmode
+        puts content
+      end
+      # If the user use -o  to output
+      if file_object
+        file_object.write "#{content}\n"
+      end
   end
-  content
+
 end
 # Function to get checksum of input
-# noinspection RubyResolve,RubyResolve,RubyResolve,RubyStringKeysInHashInspection
-def checksum_handler(file_path, hash_db, hash_function)
-  # Reference for hash functions
-  hash_functions = {"md5" => Digest::MD5, "sha1" => Digest::SHA1, "sha2" => Digest::SHA2}
-  # Get the checksum[s]
-  # Check if is a file
-  if File.file? file_path
-    # Get the hash of the file
-    content = "#{File.expand_path(file_path)},#{checksum(file_path, hash_functions[hash_function])}"
-  elsif File.directory? file_path
-    content = recursive_get_content file_path, hash_functions[hash_function]
-  else
-    puts 'The file provided exists?'
-    return
+def checksum_handler(file_path, hash_db, hash_class, debugmode)
+  # Puts hash class that is really a hash function
+  if debugmode
+    puts hash_class
   end
-  content = "#{hash_function}\n#{content}"
-  # If a output file is the input .csv
+  # Write to target if is stablished
   if hash_db.is_a? String
-    # Write all the checksums to the wanted output
-    write_to_db hash_db, content
+    # Handler for the next writes
+    file_object = File.open hash_db, 'w'
+    file_object.write "#{hash_class}\n"
   else
-    puts content
+    # When not file is set
+    file_object = nil
+  end
+  # Stablish the hash class
+  hash_class = {1 => Digest::SHA1, 2 => Digest::SHA2, 5 => Digest::MD5}[hash_class]
+  # Recursive mode also works with files
+  recursive_get_content file_path, hash_class, file_object, debugmode
+  # If we are redirecting the hashes to a file finally close it
+  if file_object
+    file_object.close
   end
 end
 # Function to compare the hash provided and the one computed
@@ -99,7 +99,7 @@ end
 # Compare the checksums from a db with it's files or a raw hash with the one of a file
 def compare_hashes_handler(hash_, file_, hash_class)
   # noinspection RubyStringKeysInHashInspection,RubyResolve
-  hash_class_reference = {"md5" => Digest::MD5, "sha1" => Digest::SHA1, "sha2" => Digest::SHA2}
+  hash_class_reference = {1 => Digest::SHA1, 2 => Digest::SHA2, 5 => Digest::MD5}
   # Check if hash_ is a raw hash or a csv db
   if File.file? hash_
     # Handler for databse
@@ -109,7 +109,7 @@ def compare_hashes_handler(hash_, file_, hash_class)
     # Close the file because we don't need it anymore
     file_object.close
     # Fist line of this file is the configuration line
-    hash_class = lines[0].strip
+    hash_class = lines[0].strip.to_i
 
     # Parameters for the setup of the hash_function
     hash_class = hash_class_reference[hash_class]
@@ -130,24 +130,27 @@ end
 # main function to execute it
 def main
   # Arguments base to be use for reference
-  args = {:hash_function => 'sha1',:compare => false, :hash => nil, :file => nil, :output_file => nil}
+  args = {:hash_function => 1,:compare => false, :debugmode => false, :hash => nil, :file => nil, :output_file => nil}
   # Options to be parsed
   opt = OptionParser.new
   opt.banner = "Checksum handler; Usage: checksum.rb <options> FILE"
   opt.on("-c", "--compare HASH/HASHDB", "Set the mode to compare an input hash with the FILE or to compare all hashes of the with all file inside it") do |value|
     args[:compare] = value
   end
+  opt.on('-v', '--verbose', 'Verbose mode ON') do
+    args[:compare] = true
+  end
   opt.on("-o", "--output-file FILENAME", "Output file for the checksum (csv)") do |value|
     args[:output_file] = value
   end
   opt.on('-5', "--md5", "Use MD5 algorithm") do
-    args[:hash_function] = "md5"
+    args[:hash_function] = 5
   end
   opt.on('-1', '--sha1', 'Use SHA1 algorithm (Set by default)') do
-    args[:hash_function] = 'sha1'
+    args[:hash_function] = 1
   end
   opt.on('-2', '--sha2', 'Use SHA2 algorithm') do
-    args[:hash_function] = 'sha2'
+    args[:hash_function] = 2
   end
   opt.on('-h', '--help') do
     puts opt
@@ -156,15 +159,20 @@ def main
   # Get the FILE variable
   args[:file] = ARGV.pop
   # If the mode is set to compare
+
   begin
     if args[:compare]
       compare_hashes_handler args[:compare], args[:file], args[:hash_function]
     else
-      checksum_handler args[:file], args[:output_file], args[:hash_function]
+      checksum_handler args[:file], args[:output_file], args[:hash_function], args[:debugmode]
     end
-  rescue
+  rescue => error
+    # For debugging
+    puts error
+    # Print options
     puts opt
   end
+
 end
 
 main
