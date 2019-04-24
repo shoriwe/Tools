@@ -21,29 +21,33 @@ def checksum(file_path, hash_class)
 end
 # get all hashes checksum from the content of a folder
 def recursive_get_content(_path, hash_class, file_object, debugmode)
-  # When the file is a directory be recursive
-  if File.directory? _path
-    # Object to hand the directory
-    directory_object = Dir.open _path
-    base_path = File.expand_path _path
-  # Process all files in directory
-    directory_object.each_child do |child|
-      # Child to be processed
-      child_path = File.join base_path, child
+  begin
+    # When the file is a directory be recursive
+    if File.directory? _path
+      # Object to hand the directory
+      directory_object = Dir.open _path
+      base_path = File.expand_path _path
+    # Process all files in directory
+      directory_object.each_child do |child|
+        # Child to be processed
+        child_path = File.join base_path, child
 
-      recursive_get_content child_path, hash_class, file_object, debugmode
+        recursive_get_content child_path, hash_class, file_object, debugmode
+      end
+    else
+        # When it is aa file write directly to file_object or print it
+        content = "#{File.expand_path _path},#{checksum _path, hash_class}"
+        # Debug mode prints every file hash
+        if debugmode
+          puts content
+        end
+        # If the user use -o  to output
+        if file_object
+          file_object.write "#{content}\n"
+        end
     end
-  else
-      # When it is aa file write directly to file_object or print it
-      content = "#{File.expand_path _path},#{checksum _path, hash_class}"
-      # Debug mode prints every file hash
-      if debugmode
-        puts content
-      end
-      # If the user use -o  to output
-      if file_object
-        file_object.write "#{content}\n"
-      end
+  rescue
+    nil
   end
 
 end
@@ -138,7 +142,7 @@ def main
     args[:compare] = value
   end
   opt.on('-v', '--verbose', 'Verbose mode ON') do
-    args[:compare] = true
+    args[:debugmode] = true
   end
   opt.on("-o", "--output-file FILENAME", "Output file for the checksum (csv)") do |value|
     args[:output_file] = value
