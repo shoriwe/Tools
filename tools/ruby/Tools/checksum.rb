@@ -203,6 +203,10 @@ def main
   end.parse!
   # Get the FILE variable
   args[:file] = ARGV.pop
+  # When no target is specified
+  unless args[:file]
+    puts opt
+  end
   begin
     # If the mode is set to compare
     if args[:compare]
