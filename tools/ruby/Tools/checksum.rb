@@ -1,5 +1,31 @@
 require 'digest'
 require 'optparse'
+
+# get the folder base of the target file
+# used by samefolder option hat change file path to ./ as the script was working in the same folder
+def getfolder(file)
+  # Directory to return after analysing the target
+  current_dir = Dir.pwd
+  # when the target is a directory cd into inmediatly
+  if File.directory? file
+    Dir.chdir file
+    # Get the folder that is going to be replaced with ./
+    directory = Dir.pwd + '/'
+  else
+    # When the target is a file we need to get it's location
+    splited_file_path = File.expand_path(file).split('/')
+    # this limit reference the last folder before the filename
+    limit = splited_file_path.length - 1
+    # Get into the same folder of the target file
+    Dir.chdir splited_file_path[0...limit].join('/')
+    # Get the folder that is going to be replaced with ./
+    directory = Dir.pwd + '/'
+  end
+  # Return to the original working directory
+  Dir.chdir current_dir
+  # return the founded directory that is going to be repalced in the target's path with './'
+  directory
+end
 # Create a hash sha1 checksum from a file
 def checksum(file_path, hash_class)
   # Size of each chunk
@@ -20,7 +46,7 @@ def checksum(file_path, hash_class)
   end
 end
 # get all hashes checksum from the content of a folder
-def recursive_get_content(_path, hash_class, file_object, debugmode)
+def recursive_get_content(_path, hash_class, file_object, debugmode, samefolder)
   begin
     # When the file is a directory be recursive
     if File.directory? _path
@@ -32,19 +58,27 @@ def recursive_get_content(_path, hash_class, file_object, debugmode)
         # Child to be processed
         child_path = File.join base_path, child
 
-        recursive_get_content child_path, hash_class, file_object, debugmode
+        recursive_get_content child_path, hash_class, file_object, debugmode, samefolder
       end
     else
-        # When it is aa file write directly to file_object or print it
-        content = "#{File.expand_path _path},#{checksum _path, hash_class}"
-        # Debug mode prints every file hash
-        if debugmode
-          puts content
-        end
-        # If the user use -o  to output
-        if file_object
-          file_object.write "#{content}\n"
-        end
+      # path to be used
+      if samefolder
+        # use ./ for base example ./filename.txt
+        file_path = _path.sub(samefolder, './')
+      else
+        # use complete path to file
+        file_path = File.expand_path _path
+      end
+      # When it is aa file write directly to file_object or print it
+      content = "#{file_path},#{checksum _path, hash_class}"
+      # Debug mode prints every file hash
+      if debugmode
+        puts content
+      end
+      # If the user use -o  to output
+      if file_object
+        file_object.write "#{content}\n"
+      end
     end
   rescue
     nil
@@ -52,7 +86,11 @@ def recursive_get_content(_path, hash_class, file_object, debugmode)
 
 end
 # Function to get checksum of input
-def checksum_handler(file_path, hash_db, hash_class, debugmode)
+def checksum_handler(file_path, hash_db, hash_class, debugmode, samefolder)
+  # returns path as the script was in the same folder
+  if samefolder
+    samefolder = getfolder file_path
+  end
   # Puts hash class that is really a hash function
   if debugmode
     puts hash_class
@@ -69,7 +107,7 @@ def checksum_handler(file_path, hash_db, hash_class, debugmode)
   # Stablish the hash class
   hash_class = {1 => Digest::SHA1, 2 => Digest::SHA2, 5 => Digest::MD5}[hash_class]
   # Recursive mode also works with files
-  recursive_get_content file_path, hash_class, file_object, debugmode
+  recursive_get_content file_path, hash_class, file_object, debugmode, samefolder
   # If we are redirecting the hashes to a file finally close it
   if file_object
     file_object.close
@@ -134,7 +172,7 @@ end
 # main function to execute it
 def main
   # Arguments base to be use for reference
-  args = {:hash_function => 1,:compare => false, :debugmode => false, :hash => nil, :file => nil, :output_file => nil}
+  args = {:hash_function => 1,:compare => false, :debugmode => false, :samefolder => false, :hash => nil, :file => nil, :output_file => nil}
   # Options to be parsed
   opt = OptionParser.new
   opt.banner = "Checksum handler; Usage: checksum.rb <options> FILE"
@@ -143,6 +181,9 @@ def main
   end
   opt.on('-v', '--verbose', 'Verbose mode ON') do
     args[:debugmode] = true
+  end
+  opt.on('-s', '--same-folder', 'Change the target file path to ./ as this script was working in the same folder; useful shareable files') do
+    args[:samefolder] = true
   end
   opt.on("-o", "--output-file FILENAME", "Output file for the checksum (csv)") do |value|
     args[:output_file] = value
@@ -162,13 +203,13 @@ def main
   end.parse!
   # Get the FILE variable
   args[:file] = ARGV.pop
-  # If the mode is set to compare
-
   begin
+    # If the mode is set to compare
     if args[:compare]
       compare_hashes_handler args[:compare], args[:file], args[:hash_function]
     else
-      checksum_handler args[:file], args[:output_file], args[:hash_function], args[:debugmode]
+      # Get check sum from file
+      checksum_handler args[:file], args[:output_file], args[:hash_function], args[:debugmode], args[:samefolder]
     end
   rescue => error
     # For debugging
@@ -176,7 +217,5 @@ def main
     # Print options
     puts opt
   end
-
 end
-
 main
