@@ -1,4 +1,4 @@
-from os.path import join, isdir, getsize
+from os.path import join, isdir, getsize, abspath
 from os import walk, access, W_OK, R_OK, X_OK, stat, remove
 from shutil import rmtree
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -220,12 +220,12 @@ class Find:
                 rmtree(join(path, value))
             else:
                 remove(join(path, value))
-            print(f"Deleted -- {join(path, value)}")
+            print(f"Deleted -- {abspath(join(path, value))}")
         except Exception as e:
             info(str(e))
 
     def __printf(self, path, value):
-        print(join(path, value))
+        print(abspath(join(path, value)))
 
     ## Handlers
     # Handler for filter functions
