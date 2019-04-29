@@ -27,11 +27,16 @@ def getfolder(file)
   directory
 end
 # Create a hash sha1 checksum from a file
-def checksum(file_path, hash_class)
+def checksum(file_path, hash_class, _bit_size)
   # Size of each chunk
   chunk_size = 2048
-  # Hash that is the checksum
-  hash = hash_class.new
+  # Hash that is the checksum function
+  # when a bitsize was specified
+  if _bit_size
+    hash = hash_class.new(_bit_size)
+  else
+    hash = hash_class.new
+  end
   # File handler
   file_object = File.open(file_path, 'r')
   # loop to update the hash
@@ -46,7 +51,7 @@ def checksum(file_path, hash_class)
   end
 end
 # get all hashes checksum from the content of a folder
-def recursive_get_content(_path, hash_class, file_object, debugmode, samefolder)
+def recursive_checksum(_path, hash_class, _bit_size, file_object, debugmode, samefolder)
   begin
     # When the file is a directory be recursive
     if File.directory? _path
@@ -58,7 +63,7 @@ def recursive_get_content(_path, hash_class, file_object, debugmode, samefolder)
         # Child to be processed
         child_path = File.join base_path, child
 
-        recursive_get_content child_path, hash_class, file_object, debugmode, samefolder
+        recursive_checksum child_path, hash_class, _bit_size,file_object, debugmode, samefolder
       end
     else
       # path to be used
@@ -70,7 +75,7 @@ def recursive_get_content(_path, hash_class, file_object, debugmode, samefolder)
         file_path = File.expand_path _path
       end
       # When it is aa file write directly to file_object or print it
-      content = "#{file_path},#{checksum _path, hash_class}"
+      content = "#{file_path},#{checksum _path, hash_class, _bit_size}"
       # Debug mode prints every file hash
       if debugmode
         puts content
@@ -86,20 +91,23 @@ def recursive_get_content(_path, hash_class, file_object, debugmode, samefolder)
 
 end
 # Function to get checksum of input
-def checksum_handler(file_path, hash_db, hash_class, debugmode, samefolder)
+def checksum_handler(file_path, hash_db, hash_class, _bit_size, debugmode, samefolder)
+  # Reference for hash banner  to notice wat function is using
+  reference_banner = {1 => "SHA1", 2 => "SHA2-#{_bit_size}", 5 => "MD5"}[hash_class]
   # returns path as the script was in the same folder
   if samefolder
     samefolder = getfolder file_path
   end
-  # Puts hash class that is really a hash function
+  # Puts hash class that is really a hash function that is going to be used
   if debugmode
-    puts hash_class
+    puts reference_banner
   end
   # Write to target if is stablished
   if hash_db.is_a? String
     # Handler for the next writes
     file_object = File.open hash_db, 'w'
-    file_object.write "#{hash_class}\n"
+    # Write the banner; useful for compare mode
+    file_object.write "#{reference_banner}\n"
   else
     # When not file is set
     file_object = nil
@@ -107,29 +115,30 @@ def checksum_handler(file_path, hash_db, hash_class, debugmode, samefolder)
   # Stablish the hash class
   hash_class = {1 => Digest::SHA1, 2 => Digest::SHA2, 5 => Digest::MD5}[hash_class]
   # Recursive mode also works with files
-  recursive_get_content file_path, hash_class, file_object, debugmode, samefolder
+  recursive_checksum file_path, hash_class, _bit_size, file_object, debugmode, samefolder
   # If we are redirecting the hashes to a file finally close it
   if file_object
     file_object.close
   end
 end
 # Function to compare the hash provided and the one computed
-def compare(file_path, hash_class, hash)
+def compare(file_path, hash_class, _bit_size, hash)
   # Check if the file exists
   ## "file_state" if the result of the compared hash and file
   if File.file? file_path
     # Always try to check file permissions
     begin
       # When the file is not corrupted
-      if checksum(file_path, hash_class) == hash
+      if checksum(file_path, hash_class, _bit_size) == hash
         file_state = "SECURE  ------------  "
       else
         # When the file is corrupted
         file_state = "CORRUPTED  ---------  "
       end
-    rescue
+    rescue => error
+      puts error
       # When we can't access to it
-      file_state = "ACCESSIONDENIED  ---  "
+      file_state = "ACCESSDENIED  ---  "
     end
   else
     # When we can't find the file with the path provided
@@ -139,20 +148,26 @@ def compare(file_path, hash_class, hash)
   puts "#{file_state}#{file_path}"
 end
 # Compare the checksums from a db with it's files or a raw hash with the one of a file
-def compare_hashes_handler(hash_, file_, hash_class)
+def compare_hashes_handler(hash_, file_, hash_class, _bit_size)
   # noinspection RubyStringKeysInHashInspection,RubyResolve
   hash_class_reference = {1 => Digest::SHA1, 2 => Digest::SHA2, 5 => Digest::MD5}
   # Check if hash_ is a raw hash or a csv db
   if File.file? hash_
+    # hash_ is a csv database with hashes to check
     # Handler for databse
     file_object = File.open hash_, 'r'
     # All the lines of the db
     lines = file_object.readlines
     # Close the file because we don't need it anymore
     file_object.close
-    # Fist line of this file is the configuration line
-    hash_class = lines[0].strip.to_i
-
+    # Fist line of this file is the configuration line that is the function and its bit size (if is sha2)
+    hash_class, _bit_size = lines[0].strip.split('-')
+    # Has_class can be transformed to int corresponding to its number
+    hash_class = {"SHA1" => 1, "SHA2" => 2, "MD5" => 5}[hash_class]
+    # When a bit size was specified transform it to int
+    if _bit_size.is_a? String
+      _bit_size = _bit_size.to_i
+    end
     # Parameters for the setup of the hash_function
     hash_class = hash_class_reference[hash_class]
 
@@ -160,13 +175,14 @@ def compare_hashes_handler(hash_, file_, hash_class)
       lines = lines[1..]
       lines.each do |line|
         file_path, hash  = line.strip.split(',')
-        compare file_path, hash_class, hash
+        compare file_path, hash_class, _bit_size, hash
     end
   else
+    # hash_ variable is a raw hash
     # Get the hash class from the string provided
     hash_class = hash_class_reference[hash_class]
     # Compare the raw hash (hash_) with the file provided
-    compare file_,hash_class, hash_
+    compare file_,hash_class, _bit_size, hash_
   end
 end
 # main function to execute it
@@ -194,7 +210,11 @@ def main
   opt.on('-1', '--sha1', 'Use SHA1 algorithm (Set by default)') do
     args[:hash_function] = 1
   end
-  opt.on('-2', '--sha2', 'Use SHA2 algorithm') do
+  opt.on('-2', '--sha2 BITSLENGTH', 'Use SHA2 algorithm with your specific bit lenth can be 256, 384 or 512') do |bit_size|
+    # SHA2 can have different bit sizes like 224, 256, 384, 512
+    if [256, 384, 512].find bit_size.to_i
+      args[:bit_size] = bit_size.to_i
+    end
     args[:hash_function] = 2
   end
   opt.on('-h', '--help') do
@@ -205,15 +225,19 @@ def main
   args[:file] = ARGV.pop
   # When no target is specified
   unless args[:file]
-    puts opt
+    # iif compare mode isn't enabled
+    unless args[:compare]
+      puts opt
+    end
+
   end
   begin
     # If the mode is set to compare
     if args[:compare]
-      compare_hashes_handler args[:compare], args[:file], args[:hash_function]
+      compare_hashes_handler args[:compare], args[:file], args[:hash_function], args[:bit_size]
     else
       # Get check sum from file
-      checksum_handler args[:file], args[:output_file], args[:hash_function], args[:debugmode], args[:samefolder]
+      checksum_handler args[:file], args[:output_file], args[:hash_function], args[:bit_size],args[:debugmode], args[:samefolder]
     end
   rescue => error
     # For debugging
