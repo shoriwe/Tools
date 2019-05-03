@@ -36,7 +36,7 @@ class Client:
         self.__transport = Transport(create_connection(self.__address))
 
     def __authenticate(self):
-        self.__password = 'betterpassword'  # input(self.__username + '@' + ':'.join([str(x) for x in self.__address]) + '\'s password: ')
+        self.__password = input(self.__username + '@' + ':'.join([str(x) for x in self.__address]) + '\'s password: ')
         self.__transport.connect(username=self.__username, password=self.__password)
         self.__handler()
 
