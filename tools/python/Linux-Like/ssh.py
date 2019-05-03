@@ -50,7 +50,3 @@ class Client:
 
     def run(self):
         self.__authenticate()
-
-
-c = Client('administrator@192.168.56.104:22', '')
-c.run()
