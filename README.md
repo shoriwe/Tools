@@ -3,14 +3,11 @@
 # Description
 Scripts, extensions, shortcuts and implementations for Pythonista app
 
-# pythonista-only
+# Pythonista
 This scripts only can be executed in a ide with modules that the ones in
-Pythonista
-## Editor
-Scripts that are extensions for the Pythonista Editor
-
-## KB_shortcuts
-This scripts approach `Pykeys` feature; this folder have some interesting shortcuts
+Pythonista. They can copy function that isn't in the app, create a zip with selected files,
+eval function for notes app, quick search of selected text in `DASH`, Clone selected repo with working copy. 
+Note that change tabs for spaces and refactor are bad implemented
 
 # Tools
 Multi platform tools (Linux-Like) to be used in non `UNIX` systems, Blue Team tools
