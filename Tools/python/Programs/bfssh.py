@@ -140,7 +140,7 @@ def main():
                         default=10)
     parser.add_argument('-P', '--paralel-mode',
                         help='The threads are created for each username; In default mode (linear), all' \
-                             ' threads are set for the passwords of each user', default='Linear')
+                             ' threads are set for the passwords of each user', default='Linear', action='store_const', const='Paralel')
     args = vars(parser.parse_args())
     if args['user_wordlist'] and args['password_wordlist']:
         usernames = args['user_wordlist']
