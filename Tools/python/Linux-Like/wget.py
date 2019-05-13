@@ -7,17 +7,33 @@ from requests import get
 from logging import basicConfig, info, error, CRITICAL, INFO
 
 # Download a file to target output file if specified or it's proper filename
-def download(filename, content):
-    with open(filename, 'wb') as output:
-        output.write(content)
-        output.close()
-
+def download(filename, url):
+    # This help  with bigger files to not crash python by buffer overflow
+    with get(url) as req:
+        with open(filename, 'rb') as output_file:
+            for chunk in req.iter_content(16384):  # 16kB
+                # Check if the chunk is valid
+                if chunk:
+                    output_file.write(chunk)
+                    # Save changes to file (helps to freeze memory)
+                    output_file.flush()
+            output_file.close()
+        req.close()
+# Download possible small files (html, htm, php)
+def downloadHTML(filename, content):
+    with open(filename, 'wb') as output_file:
+        output_file.write(content)
+        output_file.close()
 # Extract all the urls from the content of one
 def getURLs(content):
     raw_results = finditer(r'((href)|(src))="[^ #]+"'.encode('utf-8'), content)
     urls = list(map(lambda u: u.group().decode('utf-8').replace('href="', '').replace('src="', '').replace('"', ''),
                     raw_results))
     return urls
+
+# Check if the file is htm, html or php
+def checkHTML(url):
+    return search(r"/(\w+)\.((php)|(htm))", url).group() != None
 
 # Modular handler for wget
 class WGETHandler:
@@ -145,40 +161,51 @@ class WGETHandler:
     def request(self, url, deep, directory=getcwd()):
         for n in range(self.__tries):
             try:
+                # if the user wants recursive
                 if deep > 0:
-                    sleep(self.__wait)
                     # This help by not redownload a url
                     self.__usedURLs.append(url)
-                    r = get(url)
-                    content = r.content
-                    # Useful!; if this is not none probably the file is html or php
-                    isHTML = search(r'<((script)|(html)|([?]php))>(.+)</(.+)>'.encode(), content)
-
-                    # Name of the file corresponding to the url  and it's format
-                    filename = self.getname(url, directory, isHTML)
-
-                    download(filename, content)
-                    info(f'File {filename} downloaded')
-                    if self.__recursive and deep > 1:
-                        # Directory name
-                        directory_name = filename.split('.')[0]
-                        # this help by not doing cd command
-                        current_dir = join(directory, directory_name)
-                        if deep > 1:
-                            try:
-                                mkdir(current_dir)
-                            except:
-                                pass
-                            info(f'Directory {current_dir} created')
-                        # Extract all urls inside the content of the file
-                        urls = getURLs(content)
-                        for url in urls:
-                            if '//' != url[:2]:
-                                if '/' == url[0]:
-                                    url = self.__base[:len(self.__base) - 1] + url
-                                if url not in self.__usedURLs:
-                                    info('Processing {}'.format(url))
-                                    self.request(url, deep - 1, current_dir)
+                    # Check if the url is web like  (php, html or htm)
+                    if checkHTML(url):
+                        # User timer
+                        sleep(self.__wait)
+                        # Can be download because small risk of large file
+                        r = get(url)
+                        # Extract all url inside it
+                        urls = getURLs(r.content)
+                        # Filename for download
+                        filename = self.getname(url, directory, True)
+                        # Download the target
+                        downloadHTML(filename, r.content)
+                        info(f'File {filename} downloaded')
+                        if self.__recursive and deep > 1:
+                            # Directory name
+                            directory_name = filename.split('.')[0]
+                            # this help by not doing cd command
+                            current_dir = join(directory, directory_name)
+                            if deep > 1:
+                                try:
+                                    mkdir(current_dir)
+                                except Exception as e:
+                                    print(e)
+                                info(f'Directory {current_dir} created')
+                            # Extract all urls inside the content of the file
+                            urls = getURLs(r.content)
+                            # Recursive mode
+                            for url in urls:
+                                # optimize the url
+                                if '//' != url[:2]:
+                                    if '/' == url[0]:
+                                        # Complete the url with the base generated
+                                        url = self.__base[:len(self.__base) - 1] + url
+                                        if url not in self.__usedURLs:
+                                            info('Processing {}'.format(url))
+                                            # Do all again but with the  new url
+                                            self.request(url, deep - 1, current_dir)
+                    else:
+                        # Download other kind of file (protection from buffer overflow)
+                        filename = self.getname(url, directory, True)
+                        download(filename, url)
                     break
             except Exception as e:
                 error(f'Error with {url}\n{str(e)}')
