@@ -34,19 +34,19 @@ class Find:
     def startpoint(self, start_point):
         self.__start_point = start_point
 
-    # Setup The name filter
-    # Seach for files by ignoring it's lower or upper cases chars wirth regex
-    def setName(self, name):
-        if name:
-            # Make it that can match  upper or lower cases4
-            self.__name = r''.join(f'[{char.upper()}{char.lower()}]' if char != '*' else '(.*)' for char in name)
-            self.__filters.append(self.__search_name)
-
-    # Set the iname filter to search files by its literal name regex
+    # Setup The iname filter
+    # Seach for files with a unprocessed regex
     def setIname(self, iname):
         if iname:
-            self.__name = r''.join(iname)
-            self.__filters.append(self.__search_iname)
+            # Make it that can match  upper or lower cases4
+            self.__name = iname
+            self.__filters.append(self.__search_name)
+
+    # Set the name filter to search files by its literal name regex changing "*" for (.*)
+    def setName(self, name):
+        if name:
+            self.__name = name.replace('*', '(.*)')
+            self.__filters.append(self.__search_name)
 
     # set user for search for files owned  by a specific user
     def setUser(self, username):
@@ -111,18 +111,12 @@ class Find:
             basicConfig(level=INFO, format='%(message)s')
 
     ## Filters (conditions)
-    # Search by name ignoring lower or upper
+    # Search by name using a python regex
     # -name pattern
     def __search_name(self, path, value):
         # We don't need to use  path because only  we are going to regex value
         if fullmatch(self.__name, value):
             return value
-
-    # Search by name using lower and upper
-    # -iname pattern
-    def __search_iname(self, path, value):
-        # Is the same function as search_name only change the regex specified before
-        self.__search_name(path, value)
 
     # Search  by its owner
     # -user uname
@@ -282,10 +276,10 @@ class Find:
 def main(args=None):
     if not args:
         parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
-        parser.add_argument('-name', dest='setName', help='Search for file/folder name ignoring lower and upper',
+        parser.add_argument('-name', dest='setName', help='Search for file/folder name using a python processed regedx (change "*" for "(.*)")',
                             default=False)
         parser.add_argument('-iname', dest='setIname',
-                            help='Search for file/folder with lower and upper epecifications', default=False)
+                            help='Search for file/folder with a python unprocessed regex', default=False)
         parser.add_argument('startpoint', help='Folder to start the search')
         parser.add_argument('-uname', dest='setUser', help='Search by file owner', default=False)
         parser.add_argument('-empty', dest='setEmpty', help='Search for  empty files and folders (0 bytes size)',
