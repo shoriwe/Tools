@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="48a19632-1669-4955-a43c-bfa9f3b37106" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pythonista/Editor/copy_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/Pythonista/Editor/copy_file.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -14,23 +13,24 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Pythonista/Editor/cambiar.py">
+        <entry file="file://$PROJECT_DIR$/Pythonista/Editor/make_zip.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
+            <state relative-caret-position="561">
+              <caret line="33" selection-start-line="33" selection-end-line="33" />
               <folding>
-                <element signature="e#0#21#0" expanded="true" />
+                <element signature="e#0#20#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Pythonista/Editor/copy_file.py">
+        <entry file="file://$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2584">
-              <caret line="152" column="26" selection-start-line="152" selection-start-column="26" selection-end-line="152" selection-end-column="26" />
+            <state relative-caret-position="187">
+              <caret line="11" column="49" selection-start-line="11" selection-start-column="49" selection-end-line="11" selection-end-column="49" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#0#31#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -47,6 +47,8 @@
         <option value="$PROJECT_DIR$/Tools/python/Linux-Like/find.py" />
         <option value="$PROJECT_DIR$/Tools/python/Linux-Like/wget.py" />
         <option value="$PROJECT_DIR$/Pythonista/Editor/copy_file.py" />
+        <option value="$PROJECT_DIR$/Pythonista/Editor/make_zip.py" />
+        <option value="$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py" />
       </list>
     </option>
   </component>
@@ -61,9 +63,9 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="-8" />
-    <option name="width" value="977" />
+    <option name="width" value="1923" />
     <option name="height" value="1038" />
   </component>
   <component name="ProjectView">
@@ -88,6 +90,12 @@
               <item name="Tools" type="462c0819:PsiDirectoryNode" />
               <item name="Pythonista" type="462c0819:PsiDirectoryNode" />
               <item name="Editor" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Tools" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Tools" type="462c0819:PsiDirectoryNode" />
+              <item name="Pythonista" type="462c0819:PsiDirectoryNode" />
+              <item name="KB_shortcuts" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -179,10 +187,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="0" width="781" height="830" extended-state="0" />
+    <frame x="-6" y="0" width="1538" height="830" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.3305671" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16148649" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -247,6 +255,28 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/copy_file.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2584">
+          <caret line="152" column="26" selection-start-line="152" selection-start-column="26" selection-end-line="152" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/refactor.pyui">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/refactor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1253">
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Pythonista/Editor/cambiar.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -256,12 +286,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/copy_file.py">
+    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/make_zip.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2584">
-          <caret line="152" column="26" selection-start-line="152" selection-start-column="26" selection-end-line="152" selection-end-column="26" />
+        <state relative-caret-position="561">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#20#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="187">
+          <caret line="11" column="49" selection-start-line="11" selection-start-column="49" selection-end-line="11" selection-end-column="49" />
+          <folding>
+            <element signature="e#0#31#0" expanded="true" />
           </folding>
         </state>
       </provider>
