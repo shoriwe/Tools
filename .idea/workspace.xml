@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="48a19632-1669-4955-a43c-bfa9f3b37106" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py" afterDir="false" />
-    </list>
+    <list default="true" id="48a19632-1669-4955-a43c-bfa9f3b37106" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -11,32 +9,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Pythonista/Editor/make_zip.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="561">
-              <caret line="33" selection-start-line="33" selection-end-line="33" />
-              <folding>
-                <element signature="e#0#20#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
-              <caret line="11" column="49" selection-start-line="11" selection-start-column="49" selection-end-line="11" selection-end-column="49" />
-              <folding>
-                <element signature="e#0#31#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -49,6 +22,7 @@
         <option value="$PROJECT_DIR$/Pythonista/Editor/copy_file.py" />
         <option value="$PROJECT_DIR$/Pythonista/Editor/make_zip.py" />
         <option value="$PROJECT_DIR$/Pythonista/KB_shortcuts/eval.py" />
+        <option value="$PROJECT_DIR$/Pythonista/KB_shortcuts/Insert_struct.py" />
       </list>
     </option>
   </component>
@@ -83,19 +57,20 @@
             <path>
               <item name="Tools" type="b2602c69:ProjectViewProjectNode" />
               <item name="Tools" type="462c0819:PsiDirectoryNode" />
-              <item name="Pythonista" type="462c0819:PsiDirectoryNode" />
+              <item name="Tools" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="Tools" type="b2602c69:ProjectViewProjectNode" />
               <item name="Tools" type="462c0819:PsiDirectoryNode" />
-              <item name="Pythonista" type="462c0819:PsiDirectoryNode" />
-              <item name="Editor" type="462c0819:PsiDirectoryNode" />
+              <item name="Tools" type="462c0819:PsiDirectoryNode" />
+              <item name="python" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="Tools" type="b2602c69:ProjectViewProjectNode" />
               <item name="Tools" type="462c0819:PsiDirectoryNode" />
-              <item name="Pythonista" type="462c0819:PsiDirectoryNode" />
-              <item name="KB_shortcuts" type="462c0819:PsiDirectoryNode" />
+              <item name="Tools" type="462c0819:PsiDirectoryNode" />
+              <item name="python" type="462c0819:PsiDirectoryNode" />
+              <item name="Linux-Like" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -119,7 +94,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.wget">
+  <component name="RunManager" selected="Python.httpserver">
     <configuration name="find" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Tools" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -134,6 +109,27 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Tools/python/Linux-Like/find.py" />
       <option name="PARAMETERS" value="./ -name *find*" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="httpserver" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="Tools" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tools/python/Linux-Like" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Tools/python/Linux-Like/httpserver.py" />
+      <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -165,9 +161,11 @@
     <list>
       <item itemvalue="Python.find" />
       <item itemvalue="Python.wget" />
+      <item itemvalue="Python.httpserver" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.httpserver" />
         <item itemvalue="Python.wget" />
         <item itemvalue="Python.find" />
       </list>
@@ -188,14 +186,13 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-6" y="0" width="1538" height="830" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16148649" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.16148649" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32956153" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.23903818" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.23891273" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -286,12 +283,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/make_zip.py">
+    <entry file="file://$PROJECT_DIR$/Pythonista/KB_shortcuts/functions_eval/function.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="33" selection-start-line="33" selection-end-line="33" />
+        <state relative-caret-position="-1454">
+          <caret line="9" column="18" lean-forward="true" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
           <folding>
-            <element signature="e#0#20#0" expanded="true" />
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pythonista/KB_shortcuts/Insert_struct.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="51">
+          <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Tools/python/Linux-Like/httpserver.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="493">
+          <caret line="29" column="10" lean-forward="true" selection-start-line="29" selection-start-column="10" selection-end-line="29" selection-end-column="10" />
+          <folding>
+            <element signature="e#0#81#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -302,6 +316,16 @@
           <caret line="11" column="49" selection-start-line="11" selection-start-column="49" selection-end-line="11" selection-end-column="49" />
           <folding>
             <element signature="e#0#31#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pythonista/Editor/make_zip.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="561">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
+          <folding>
+            <element signature="e#0#20#0" expanded="true" />
           </folding>
         </state>
       </provider>
