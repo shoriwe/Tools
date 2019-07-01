@@ -278,10 +278,10 @@ def main(args=None):
         parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
         parser.add_argument('-name', dest='setName', help='Search for file/folder name using a python processed regedx (change "*" for "(.*)")',
                             default=False)
-        parser.add_argument('-iname', dest='setIname',
+        parser.add_argument('-rname', dest='setIname',
                             help='Search for file/folder with a python unprocessed regex', default=False)
         parser.add_argument('startpoint', help='Folder to start the search')
-        parser.add_argument('-uname', dest='setUser', help='Search by file owner', default=False)
+        parser.add_argument('-user', dest='setUser', help='Search by file owner', default=False)
         parser.add_argument('-empty', dest='setEmpty', help='Search for  empty files and folders (0 bytes size)',
                             default=False, action='store_const', const=True)
         parser.add_argument('-size', dest='setSize',
