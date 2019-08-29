@@ -2,7 +2,7 @@ import ui
 from sys import argv
 from os.path import join, isdir
 from shutil import copy2, copytree
-from os import listdir
+from os import listdir, getcwd
 
 # This function is better that the original from shutil
 # Thanks to @atzz from StackOverflow
@@ -63,12 +63,18 @@ class TableViewDelegate(object):
     def tableview_did_select(self, tableview, section, row):
         cd(tableview)
 
+# Get the home directory
+def get_home():
+    pwd = getcwd()
+    while pwd.split("/") > 8:
+        pwd = betterJoin(pwd, "..")
+    return pwd
 # Data source
 # For some reason tableview requires a object to manage it's values.
 # This only grabs values and make it acceible for the tableview
 # It's customized for this script
 class CustomDataSource(object):
-    def __init__(self, pwd="/private/var/mobile/Containers/Shared/AppGroup/AD7A0AE4-6E50-4984-8814-0064F413FC33/"):
+    def __init__(self, pwd=get_home()):
         # Items for the tableview
         self.items = None
         # Easier way to manage the working directory
