@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from json import dumps
 from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
 from threading import Thread
+import ipaddress
 database = {'0': ['None', 'In programming APIs '], '1': ['TCP Port Service Multiplexer '], '5': ['Remote Job Entry'],
             '7': ['Echo Protocol'], '9': ['Discard Protocol', 'Wake-on-LAN'], '11': ['Active Users '], '13': ['Daytime Protocol'],
             '15': ['Previously netstat service'], '17': ['Quote of the Day '], '18': ['Message Send Protocol'], '19': ['Character Generator Protocol '],
@@ -176,16 +177,18 @@ class HostDiscovery:
 
         self.__noports = False
         self.__noping = False
-
+    # Calculate Subnet
+    def __subnet(self, target):
+        interface = ipaddress.IPv4Interface(target)
+        network = interface.network
+        for ip in network:
+            yield str(ip)
     # Can be only one
     def settargets(self, targets):
         ts = []
         for target in targets:
-            if '*' == target.split('.')[-1]:
-                splited_target = target.split('.')
-                base = '.'.join(splited_target[:len(splited_target)-1])
-                for number in range(256):
-                    ts.append(base+'.'+str(number))
+            if "/" in target:
+                ts.extend(list(self.__subnet(target)))
             else:
                 ts.append(target)
         self.__targets += ts
