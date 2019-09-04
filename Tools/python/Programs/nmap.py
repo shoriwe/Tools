@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from json import dumps
 from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
 from threading import Thread
+from random import randint
 import ipaddress
 database = {'0': ['None', 'In programming APIs '], '1': ['TCP Port Service Multiplexer '], '5': ['Remote Job Entry'],
             '7': ['Echo Protocol'], '9': ['Discard Protocol', 'Wake-on-LAN'], '11': ['Active Users '], '13': ['Daytime Protocol'],
@@ -105,16 +106,16 @@ class PortScanner:
         # Port range
         self.__port_range = port_range
 
-        self.__packet = b"bytes\n"
+        self.__packet = b"bytes\n\r"
         self.__ports = {}
-
+        self.__socket = None
         # Only have this number of  threads active at the same time
         self.__max_number_of_threads = 500
         self.__active_threads = 0
     # UDP  scanning by sending bytes to ort and  waiting for response
     def __udp_scan(self, address):
-        s = socket(self.__family, self.__protocol)
-        s.settimeout(10)
+        # Use the created UDP Socket
+        s = self.__socket
         try:
             s.sendto(self.__packet, address)
             for try_ in range(5):
@@ -124,7 +125,7 @@ class PortScanner:
                     break
         except:
             pass
-        return s
+        self.__active_threads -= 1
     # Basic TCP scan
     def __tcp_scan(self, address):
         s = socket(self.__family, self.__protocol)
@@ -134,22 +135,28 @@ class PortScanner:
             self.__ports[address[0]].append(address[1])
         except:
             pass
-        return s
-    # Handler that decide which method is going to be used for each target
-    def __target_handler(self, target, port):
-        if self.__family == SOCK_STREAM:
-            s = self.__tcp_scan((target, port))
-        elif self.__family == SOCK_DGRAM:
-            s = self.__udp_scan((target, port))
-        else:
-            pass
         s.close()
         del s
         self.__active_threads -= 1
         exit(-1)
+    # Handler that decide which method is going to be used for each target
+    def __target_handler(self, target, port):
+        # Decide which method use to scan
+        if self.__protocol == SOCK_STREAM:
+            self.__tcp_scan((target, port))
+        elif self.__protocol == SOCK_DGRAM:
+            self.__udp_scan((target, port))
+        else:
+            pass
 
     # Scan all required ports of all targets
     def scan(self, targets):
+        # Create a udp socket that can be used for any thread
+        if self.__protocol == SOCK_DGRAM:
+            self.__socket = socket(self.__family, self.__protocol)
+            self.__socket.bind(('0.0.0.0', randint(0, 65535 + 1)))
+            self.__socket.settimeout(10)
+        # Start Scanning the targets
         for target in targets:
             self.__ports[target] = []
             for port in self.__port_range:
@@ -157,8 +164,13 @@ class PortScanner:
                     pass
                 self.__active_threads += 1
                 Thread(target=self.__target_handler, args=([target, port])).start()
+        # Wait until all threads end
         while self.__active_threads > 0:
             pass
+        # Finally close the UDP socket if it was created
+        if self.__protocol == SOCK_DGRAM:
+            self.__socket.close()
+            del self.__socket
 
     def getports(self):
         return self.__ports
@@ -255,9 +267,9 @@ class HostDiscovery:
         return self.__results
 
 class Processing:
-    def __init__(self, results: dict):
+    def __init__(self, results: dict, only_open):
         self.__results = results
-
+        self.__only_open = only_open
     # terminal print
     def termprint(self):
         for protocol in self.__results:
@@ -324,6 +336,7 @@ def main(args=None):
         # Output options
         parser.add_argument('-oN', dest='normaloutput', help='Normal output like "nmap [host] > out.txt"')
         parser.add_argument('-oJ', dest='jsonoutput', help='Store in json file')
+        parser.add_argument('--open', dest='open_ports', help='Show only the hosts with open ports', default=False, action='store_const', const=True)
 
         args = vars(parser.parse_args())
     # Target processing handler
@@ -361,7 +374,7 @@ def main(args=None):
     results = hs.scan()
 
     # Do something with the resulted scan
-    processing = Processing(results)
+    processing = Processing(results, args["open_ports"])
     if args['jsonoutput']:
         processing.jsonoutput(args['jsonoutput'])
     elif args['normaloutput']:
