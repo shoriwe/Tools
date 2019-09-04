@@ -926,7 +926,7 @@ def main(args=None):
     # Port processing handler
     ps = Ports()
 
-    keys_list = list(args.keys())
+    keys_list = tuple(args.keys())
     first_port_option_index = None
     for number, key in enumerate(keys_list[1:]):
         if key == 'portrange':
@@ -956,6 +956,7 @@ def main(args=None):
 
     # Do something with the resulted scan
     processing = Processing(results, args["open_ports"])
+    # Try to filter ports if theuser wants
     processing.open_ports()
     if args['jsonoutput']:
         processing.jsonoutput(args['jsonoutput'])
