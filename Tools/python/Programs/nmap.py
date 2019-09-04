@@ -841,15 +841,12 @@ class Processing:
     def __init__(self, results: dict, only_open):
         self.__results = results
         self.__only_open = only_open
-
+    # Filter open ports of results
     def open_ports(self):
         if self.__only_open:
             results = {}
             for protocol in self.__results.keys():
-                buffer = {}
-                for key, value in self.__results[protocol].items():
-                    if len(value):
-                        buffer[key] = value
+                buffer = dict(filter(lambda element: len(element[1]), self.__results[protocol].items()))
                 if len(buffer):
                     results[protocol] = buffer
             self.__results = results
