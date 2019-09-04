@@ -105,23 +105,43 @@ class PortScanner:
         # Port range
         self.__port_range = port_range
 
+        self.__packet = b"bytes\n"
         self.__ports = {}
 
         # Only have this number of  threads active at the same time
         self.__max_number_of_threads = 500
         self.__active_threads = 0
-
-    def __target_handler(self, target, port):
+    # UDP  scanning by sending bytes to ort and  waiting for response
+    def __udp_scan(self, address):
         s = socket(self.__family, self.__protocol)
         s.settimeout(10)
         try:
-            s.connect((target, port))
-            if self.__protocol == SOCK_DGRAM:
-                s.send(b'bytes')
-                s.recv(1024)
-
-            self.__ports[target].append(port)
+            s.sendto(self.__packet, address)
+            for try_ in range(5):
+                btes, recv_address = s.recvfrom(2048)
+                if address[0] == recv_address[0]:
+                    self.__ports[address[0]].append(address[1])
+                    break
         except:
+            pass
+        return s
+    # Basic TCP scan
+    def __tcp_scan(self, address):
+        s = socket(self.__family, self.__protocol)
+        s.settimeout(10)
+        try:
+            s.connect(address)
+            self.__ports[address[0]].append(address[1])
+        except:
+            pass
+        return s
+    # Handler that decide which method is going to be used for each target
+    def __target_handler(self, target, port):
+        if self.__family == SOCK_STREAM:
+            s = self.__tcp_scan((target, port))
+        elif self.__family == SOCK_DGRAM:
+            s = self.__udp_scan((target, port))
+        else:
             pass
         s.close()
         del s
