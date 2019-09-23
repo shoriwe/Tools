@@ -695,11 +695,8 @@ class PortScanner:
     def __tcp_scan(self, address):
         s = socket(self.__family, self.__protocol)
         s.settimeout(10)
-        try:
-            s.connect(address)
+        if not s.connect_ex(address):
             self.__ports[address[0]].append(address[1])
-        except:
-            pass
         s.close()
         del s
         self.__active_threads -= 1
