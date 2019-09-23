@@ -3,6 +3,7 @@ from sys import argv
 from os.path import join, isdir
 from shutil import copy2, copytree
 from os import listdir, getcwd
+from appex import get_file_paths
 
 # This function is better that the original from shutil
 # Thanks to @atzz from StackOverflow
@@ -77,6 +78,8 @@ class CustomDataSource(object):
     def __init__(self, pwd=get_home()):
         # Items for the tableview
         self.items = None
+        # Paths that were passed when the script is called from SHARE
+        self.__share_paths = get_file_paths()
         # Easier way to manage the working directory
         # Note that all is virtual so this script never chdir in a directory
         self.current_dir = None
@@ -107,8 +110,13 @@ class CustomDataSource(object):
         item = sender.superview.text_label.text
         # Handler to extract the path  variable from the for loop
         path = None
+        # Check the origin of the files to copy
+        if len(argv[1:]):
+            args = argv[1:]
+        else:
+            args = self.__share_paths
         #  for each file the user want to copy
-        for file in argv[1:]:
+        for file in args:
             # Complete path to target folder
             path = betterJoin(self.current_dir, item)
             # When the source file is a folder
