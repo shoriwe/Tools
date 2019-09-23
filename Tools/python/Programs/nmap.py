@@ -838,6 +838,7 @@ class Processing:
     def __init__(self, results: dict, only_open):
         self.__results = results
         self.__only_open = only_open
+
     # Filter open ports of results
     def open_ports(self):
         if self.__only_open:
@@ -847,6 +848,7 @@ class Processing:
                 if len(buffer):
                     results[protocol] = buffer
             self.__results = results
+
     # terminal print
     def termprint(self):
         for protocol in self.__results:
