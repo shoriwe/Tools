@@ -67,6 +67,7 @@ def button_creator(title, action, frame, color):
 # This delegate help the table view with it's  selected rows
 class TableViewDelegate(object):
     # Function that is executed every time a row is selected
+    @staticmethod
     def tableview_did_select(self, tableview, section, row):
         cd(tableview)
 
