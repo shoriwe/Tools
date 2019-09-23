@@ -67,7 +67,7 @@ class TableViewDelegate(object):
 # Get the home directory
 def get_home():
     pwd = getcwd()
-    while pwd.split("/") > 8:
+    while len(pwd.split("/")) > 8:
         pwd = betterJoin(pwd, "..")
     return pwd
 # Data source
