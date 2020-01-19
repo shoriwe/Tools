@@ -5,6 +5,27 @@ import sys
 import bs4
 from six.moves.urllib.request import urlopen
 
+
+class Response(object):
+    def __init__(self, response):
+        self.__response = response
+        self.content = None
+        self.status_code = response.getcode()
+
+    def iter_content(self, chunk_size=1024):
+        self.content = self.__response.read(chunk_size)
+        while True:
+            chunk = self.__response.read(chunk_size)
+            if chunk:
+                yield chunk
+                self.content += chunk
+            else:
+                break
+
+
+def get(url):
+    return Response(urlopen(url))
+
 # Basic requirements
 # -o --output-file
 
@@ -51,7 +72,8 @@ class Handler(object):
 
     def __get_urls_from_page(self, url) -> list:
         urls = []
-        response = urlopen(url)
+        response = get(url)
+        response.iter_content(2048)
         bs4_response = bs4.BeautifulSoup(response.content, "html.parser")
         if response.status_code in (200, 204, 301, 302, 307, 401, 403):
             if self.__check_html(bs4_response):
@@ -69,16 +91,14 @@ class Handler(object):
         success = False
         self.__logger.info(f"Staring the Download of url: {url} to Path: {output_file}")
         try:
-            with urlopen(url) as response_stream:
-                with open(output_file, "wb") as output_file_object:
-                    while True:
-                        data_chunk = response_stream.read(2048)
-                        if data_chunk:
-                            output_file_object.write(data_chunk)
-                            output_file_object.flush()
-                        else:
-                            break
-                    output_file_object.close()
+            response = get(url)
+            with open(output_file, "wb") as output_file_object:
+                for data_chunk in response.iter_content(2048):
+                    print(data_chunk)
+                    if data_chunk:
+                        output_file_object.write(data_chunk)
+                        output_file_object.flush()
+                output_file_object.close()
             self.__logger.info(f"URL: {url} Downloaded to: {output_file}")
             success = True
         except Exception as e:
