@@ -21,6 +21,7 @@ class Response(object):
             else:
                 break
         return content
+
     def close(self):
         self.__response.close()
 
@@ -42,6 +43,7 @@ def get(url):
 # --password=
 
 
+# noinspection PyMethodMayBeStatic
 class Handler(object):
     def __init__(self):
         self.__base_url = None
@@ -184,7 +186,6 @@ class Handler(object):
             if self.__logger.level != logging.DEBUG:
                 self.__logger.setLevel(logging.DEBUG)
             self.__logger.addHandler(file_handler)
-
 
     def start(self):
         if self.__recursive_mode and self.__spider_mode:
