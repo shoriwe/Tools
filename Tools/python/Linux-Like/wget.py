@@ -1,9 +1,9 @@
-import requests
 import logging
 import os
 import argparse
 import sys
 import bs4
+from six.moves.urllib.request import urlopen
 
 # Basic requirements
 # -o --output-file
@@ -51,7 +51,7 @@ class Handler(object):
 
     def __get_urls_from_page(self, url) -> list:
         urls = []
-        response = requests.get(url)
+        response = urlopen(url)
         bs4_response = bs4.BeautifulSoup(response.content, "html.parser")
         if response.status_code in (200, 204, 301, 302, 307, 401, 403):
             if self.__check_html(bs4_response):
@@ -69,14 +69,16 @@ class Handler(object):
         success = False
         self.__logger.info(f"Staring the Download of url: {url} to Path: {output_file}")
         try:
-            with requests.get(url, stream=True) as response_stream:
+            with urlopen(url) as response_stream:
                 with open(output_file, "wb") as output_file_object:
-                    for data_chunk in response_stream.iter_content(2048):
+                    while True:
+                        data_chunk = response_stream.read(2048)
                         if data_chunk:
                             output_file_object.write(data_chunk)
                             output_file_object.flush()
+                        else:
+                            break
                     output_file_object.close()
-                response_stream.close()
             self.__logger.info(f"URL: {url} Downloaded to: {output_file}")
             success = True
         except Exception as e:
@@ -90,7 +92,8 @@ class Handler(object):
             return self.__download_url_to_file(url, output_file)
 
     def __get_filename_from_url(self, url: str) -> str:
-        filename = url.split("#")[0].split("?")[0].split("/")[-1]
+        split_url = url.split("#")[0].split("?")[0].split("/")
+        filename = split_url[-2] if split_url[-1] == "" else split_url[-1]
         self.__logger.debug(f"Filename: {filename} From url: {url}")
         return filename
 
