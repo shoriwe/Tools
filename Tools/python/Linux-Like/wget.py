@@ -94,7 +94,6 @@ class Handler(object):
             response = get(url)
             with open(output_file, "wb") as output_file_object:
                 for data_chunk in response.iter_content(2048):
-                    print(data_chunk)
                     if data_chunk:
                         output_file_object.write(data_chunk)
                         output_file_object.flush()
