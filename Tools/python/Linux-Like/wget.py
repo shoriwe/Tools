@@ -30,7 +30,7 @@ def get(url):
     return Response(urlopen(url))
 
 # Basic requirements
-# -o --output-file
+# -o --output-file; Done
 
 # Cool requirements
 # -d --debug (debugging level); Done
