@@ -36,9 +36,9 @@ def get(url):
 # -d --debug (debugging level); Done
 # -t --tries=int (number of tries until success of each url); Done (At least for basic mode)
 # -O --log-file; Done
-# -r --recursive
-# -l --level=
-# --spider
+# -r --recursive; not implemented
+# -l --level=; not implemented
+# --spider; Wrong
 # --user=
 # --password=
 
