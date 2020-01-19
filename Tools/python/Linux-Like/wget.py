@@ -33,8 +33,8 @@ def get(url):
 
 # Cool requirements
 # -d --debug (debugging level); Done
-# -t --tries=int (number of tries until success of each url)
-# -O --log-file=
+# -t --tries=int (number of tries until success of each url); Done (At least for basic mode)
+# -O --log-file; Done
 # -r --recursive
 # -l --level=
 # --spider
@@ -50,9 +50,11 @@ class Handler(object):
         self.__spider_mode = None
         self.__recursive_mode = None
         self.__depth_level = None
+        self.__tries = None
 
         self.__sub_urls = []
         self.__sub_urls_visited = []
+        self.__formatter = logging.Formatter('%(levelname)s - %(message)s')
         self.__logger = logging.Logger(f"{sys.argv[0]} session")
 
     # Source: https://stackoverflow.com/a/24856208
@@ -104,10 +106,18 @@ class Handler(object):
         return success
 
     def __make_request(self, url: str, output_file: str) -> (list or bool):
-        if self.__spider_mode:
-            return self.__get_urls_from_page(url)
-        else:
-            return self.__download_url_to_file(url, output_file)
+        for try_ in range(self.__tries):
+            self.__logger.debug(f"Try number {try_ + 1} of {self.__tries} tries")
+            if self.__spider_mode:
+                result = self.__get_urls_from_page(url)
+            else:
+                result = self.__download_url_to_file(url, output_file)
+            if type(result) == bool:
+                if result:
+                    self.__logger.debug(f"Done at try number {try_ + 1} of {self.__tries} tries")
+                    return result
+            else:
+                return result
 
     def __get_filename_from_url(self, url: str) -> str:
         split_url = url.split("#")[0].split("?")[0].split("/")
@@ -141,27 +151,40 @@ class Handler(object):
         self.__output_file = os.path.abspath(output_file)
         self.__logger.info(f"Output file set to: {self.__output_file}")
 
-    def set_debug_mode(self, debug_mode):
+    def set_debug_mode(self, debug_mode: bool):
         if debug_mode:
             stream_handler = logging.StreamHandler()
-            formatter = logging.Formatter('%(levelname)s - %(message)s')
-            stream_handler.setFormatter(formatter)
+            stream_handler.setFormatter(self.__formatter)
             self.__logger.addHandler(stream_handler)
             self.__logger.setLevel(logging.DEBUG)
 
-    def set_spider(self, spider_mode):
+    def set_spider(self, spider_mode: bool):
         if spider_mode:
             self.__spider_mode = True
         self.__logger.debug(f"Spider mode: {self.__spider_mode}")
 
-    def set_recursive(self, recursive_mode):
+    def set_recursive(self, recursive_mode: bool):
         if recursive_mode:
             self.__recursive_mode = True
         self.__logger.debug(f"Recursive mode: {self.__recursive_mode}")
 
-    def set_depth_level(self, level):
+    def set_depth_level(self, level: int):
         self.__depth_level = level
         self.__logger.debug(f"Depth level: {self.__depth_level}")
+
+    def set_tries(self, tries: int):
+        self.__tries = tries
+        self.__logger.debug(f"Max number of tries per url: {self.__tries}")
+
+    def set_logfile(self, logfile):
+        print(logfile)
+        if type(logfile) == str:
+            file_handler = logging.FileHandler(logfile)
+            file_handler.setFormatter(self.__formatter)
+            if self.__logger.level != logging.DEBUG:
+                self.__logger.setLevel(logging.DEBUG)
+            self.__logger.addHandler(file_handler)
+
 
     def start(self):
         if self.__recursive_mode and self.__spider_mode:
@@ -194,9 +217,16 @@ def get_args():
                                  help="Download recursively every file (-o, --output-file is considered a directory)",
                                  action="store_true",
                                  default=False)
-    argument_parser.add_argument("-l", "--level=",
+    argument_parser.add_argument("-l", "--level",
                                  help="Depth level from spider or recursive modes",
                                  type=int, default=5)
+    argument_parser.add_argument("-t", "--tries",
+                                 help="Number of tries until success per url",
+                                 type=int,
+                                 default=1)
+    argument_parser.add_argument("-O", "--log-file",
+                                 help="File to log debbuging",
+                                 default=None)
     argument_parser.add_argument("url", help="Target url")
     return vars(argument_parser.parse_args())
 
@@ -208,6 +238,10 @@ def main():
     handler.set_url(arguments["url"])
     handler.set_output_file(arguments["output_file"])
     handler.set_spider(arguments["spider"])
+    handler.set_recursive(arguments["recursive"])
+    handler.set_depth_level(arguments["level"])
+    handler.set_tries(arguments["tries"])
+    handler.set_logfile(arguments["log_file"])
     handler.start()
 
 
