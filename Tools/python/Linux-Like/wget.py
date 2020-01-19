@@ -1,275 +1,194 @@
-from argparse import ArgumentParser
-from os import getcwd, mkdir
-from os.path import join
-from re import finditer, search
-from time import sleep
-from requests import get
-from logging import basicConfig, info, error, CRITICAL, INFO
+import requests
+import logging
+import os
+import argparse
+import sys
+import bs4
 
-# Download a file to target output file if specified or it's proper filename
-def download(filename, url):
-    # This help  with bigger files to not crash python by buffer overflow
-    with get(url) as req:
-        with open(filename, 'rb') as output_file:
-            for chunk in req.iter_content(16384):  # 16kB
-                # Check if the chunk is valid
-                if chunk:
-                    output_file.write(chunk)
-                    # Save changes to file (helps to freeze memory)
-                    output_file.flush()
-            output_file.close()
-        req.close()
-# Download possible small files (html, htm, php)
-def downloadHTML(filename, content):
-    with open(filename, 'wb') as output_file:
-        output_file.write(content)
-        output_file.close()
-# Extract all the urls from the content of one
-def getURLs(content):
-    raw_results = finditer(r'((href)|(src))="[^ #]+"'.encode('utf-8'), content)
-    urls = list(map(lambda u: u.group().decode('utf-8').replace('href="', '').replace('src="', '').replace('"', ''),
-                    raw_results))
-    return urls
+# Basic requirements
+# -o --output-file
 
-# Check if the file is htm, html or php
-def checkHTML(url):
-    return search(r"/(\w+)\.((php)|(htm))", url).group() != None
+# Cool requirements
+# -d --debug (debugging level); Done
+# -t --tries=int (number of tries until success of each url)
+# -O --log-file=
+# -r --recursive
+# -l --level=
+# --spider
+# --user=
+# --password=
 
-# Modular handler for wget
-class WGETHandler:
+
+class Handler(object):
     def __init__(self):
-        # URLs aldery dowloaded
-        self.__usedURLs = []
-
-        ### Variables set by Functions
-        # url to be processed
-        self.__url = None
-        # Output file
+        self.__base_url = None
         self.__output_file = None
-        # Base url for local urls (wget is going to try it's own if you want)
-        self.__base = None
-        self.__function = None
-        # Recursive Download of a site
-        self.__recursive = None
-        #  Only make a map of a site
-        self.__spider = None
-        # The deep the recursion download and the spider maping can get
-        self.__deep = None
-        # Tries per url  request
-        self.__tries = None
-        # Wait time between request
-        self.__wait = None
-        # Debug level
-        self.__level = None
+        self.__basic_auth_credentials = None
+        self.__spider_mode = None
+        self.__recursive_mode = None
+        self.__depth_level = None
 
-    # Set the url to be processed
-    def setURL(self, url: str):
-        self.__url = url
+        self.__sub_urls = []
+        self.__sub_urls_visited = []
+        self.__logger = logging.Logger(f"{sys.argv[0]} session")
 
-    # Set the deepness of the spidering or recursive download
-    def setDeep(self, n: int):
-        self.__deep = n
+    # Source: https://stackoverflow.com/a/24856208
+    # Check if file content has html
+    def __check_html(self, bs4_response: bs4.BeautifulSoup) -> bool:
+        return bool(bs4_response.find())
 
-    # set time to be waited between resquests
-    def setWait(self, t: float):
-        self.__wait = t
-
-    # set the max number of tries per url  request
-    def setTries(self, tries: int):
-        self.__tries = tries
-
-    # set recursive to a value
-    def setRecursive(self, value: bool):
-        self.__recursive = value
-
-    # set default output file
-    def setOutputFile(self, file):
-        self.__output_file = file
-
-    # Set debug level to quiet
-    def setQuiet(self, value: bool):
-        if value:
-            self.__level = CRITICAL
-
-    # Set debug to verbose
-    def setVerbose(self, value: bool):
-        if value:
-            self.__level = INFO
-
-    # Set the spidering
-    def setSpider(self, value: bool):
-        self.__spider = value
-
-    # Set base url for child urls download
-    def setBaseURL(self, url):
-        if url:
-            self.__base = url
-        else:
-            if self.__url[-1] != '/':
-                ref = self.__url + '/'
+    def __join_url(self, url: str, path: str) -> str:
+        url_schema = "https://" if url.startswith("https://") else "http://"
+        split_url = url.replace(url_schema, "").split("#")[0].split("?")[0].split("/")
+        split_path = path.split("#")[0].split("?")[0].split("/")
+        for file in split_path:
+            if file == "..":
+                if len(split_url) > 1:
+                    split_url.pop()
             else:
-                ref = self.__url
-            # Get base if no one was given
-            self.__base = search(r'\w{3,5}://(.+)\.\w{1,6}/', ref).group()
+                split_url.append(file)
+        return url_schema + "/".join(split_url)
 
-    # Get the name of the download
-    def getname(self, url, directory, isHTML):
-        # PHP arguments
-        if self.__output_file and not self.__recursive:
-            return self.__output_file
-        else:
-            full_filename = url.split('/')[-1]
+    def __get_urls_from_page(self, url) -> list:
+        urls = []
+        response = requests.get(url)
+        bs4_response = bs4.BeautifulSoup(response.content, "html.parser")
+        if response.status_code in (200, 204, 301, 302, 307, 401, 403):
+            if self.__check_html(bs4_response):
+                results_iter = bs4_response.findAll()
+                for result in results_iter:
+                    href_url = result.get("href")
+                    src_url = result.get("src")
+                    if href_url:
+                        urls.append(href_url)
+                    if src_url:
+                        urls.append(src_url)
+        return list(set(filter(lambda url: "#" != url[0], urls)))
 
-            if isHTML:
-
-                if '.php' not in full_filename and '.html' not in full_filename:
-                    filename = full_filename + '.html'
-                else:
-                    splited_filename = full_filename.split('.')
-                    filename = splited_filename[0]
-                    end = '.html'
-                    for number, f in enumerate(splited_filename[1:]):
-                        if 'php?' in f:
-                            args = ''.join(splited_filename[1:][number:]).replace('.', '-')
-                            end = f'?{args[4:]}.php'
-                            break
-                    filename = filename + end
-            else:
-                filename = full_filename
-        return join(directory, filename.replace(';', '_').replace(':', '--'))
-
-    # Spidering function
-    def spider(self, url, deep, start=None):
-        if not start:
-            start = deep
-        difference = start - deep
+    def __download_url_to_file(self, url: str, output_file: str) -> bool:
+        success = False
+        self.__logger.info(f"Staring the Download of url: {url} to Path: {output_file}")
         try:
-            if deep > 0:
-                r = get(url)
-                # Debugging
-                info(f'{"-"*difference}{url}')
-                content = r.content
-                urls = getURLs(content)
-                for u in urls:
-                    if '/' == u[0]:
-                        u = self.__base[:len(self.__base) - 1] + u
-                    self.spider(u, deep - 1, start)
+            with requests.get(url, stream=True) as response_stream:
+                with open(output_file, "wb") as output_file_object:
+                    for data_chunk in response_stream.iter_content(2048):
+                        if data_chunk:
+                            output_file_object.write(data_chunk)
+                            output_file_object.flush()
+                    output_file_object.close()
+                response_stream.close()
+            self.__logger.info(f"URL: {url} Downloaded to: {output_file}")
+            success = True
         except Exception as e:
-            error(str(e))
+            self.__logger.error(f"Error: {e} While Downloading: {url} to: {output_file}")
+        return success
 
-    # Request for download, can be used for recursive and for single file download
-    def request(self, url, deep, directory=getcwd()):
-        for n in range(self.__tries):
-            try:
-                # if the user wants recursive
-                if deep > 0:
-                    # This help by not redownload a url
-                    self.__usedURLs.append(url)
-                    # Check if the url is web like  (php, html or htm)
-                    if checkHTML(url):
-                        # User timer
-                        sleep(self.__wait)
-                        # Can be download because small risk of large file
-                        r = get(url)
-                        # Extract all url inside it
-                        urls = getURLs(r.content)
-                        # Filename for download
-                        filename = self.getname(url, directory, True)
-                        # Download the target
-                        downloadHTML(filename, r.content)
-                        info(f'File {filename} downloaded')
-                        if self.__recursive and deep > 1:
-                            # Directory name
-                            directory_name = filename.split('.')[0]
-                            # this help by not doing cd command
-                            current_dir = join(directory, directory_name)
-                            if deep > 1:
-                                try:
-                                    mkdir(current_dir)
-                                except Exception as e:
-                                    print(e)
-                                info(f'Directory {current_dir} created')
-                            # Extract all urls inside the content of the file
-                            urls = getURLs(r.content)
-                            # Recursive mode
-                            for url in urls:
-                                # optimize the url
-                                if '//' != url[:2]:
-                                    if '/' == url[0]:
-                                        # Complete the url with the base generated
-                                        url = self.__base[:len(self.__base) - 1] + url
-                                        if url not in self.__usedURLs:
-                                            info('Processing {}'.format(url))
-                                            # Do all again but with the  new url
-                                            self.request(url, deep - 1, current_dir)
-                    else:
-                        # Download other kind of file (protection from buffer overflow)
-                        filename = self.getname(url, directory, True)
-                        download(filename, url)
-                    break
-            except Exception as e:
-                error(f'Error with {url}\n{str(e)}')
+    def __make_request(self, url: str, output_file: str) -> (list or bool):
+        if self.__spider_mode:
+            return self.__get_urls_from_page(url)
+        else:
+            return self.__download_url_to_file(url, output_file)
+
+    def __get_filename_from_url(self, url: str) -> str:
+        filename = url.split("#")[0].split("?")[0].split("/")[-1]
+        self.__logger.debug(f"Filename: {filename} From url: {url}")
+        return filename
+
+    def __get_output_path(self, url: str, output_file: str) -> str:
+        if os.path.isdir(output_file):
+            filename = self.__get_filename_from_url(url)
+            return os.path.join(output_file, filename)
+        return output_file
+
+    def __basic(self):
+        output_file = self.__get_output_path(self.__base_url, self.__output_file)
+        self.__make_request(self.__base_url, output_file)
+
+    def __spider(self):
+        self.__sub_urls = self.__make_request(self.__base_url, self.__output_file)
+        for url in self.__sub_urls:
+            print(url)
+
+    def __recursive(self):
+        pass
+
+    def set_url(self, url: str):
+        self.__base_url = url
+        self.__logger.info(f"Url set to: {self.__base_url}")
+
+    def set_output_file(self, output_file: str):
+        self.__output_file = os.path.abspath(output_file)
+        self.__logger.info(f"Output file set to: {self.__output_file}")
+
+    def set_debug_mode(self, debug_mode):
+        if debug_mode:
+            stream_handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(levelname)s - %(message)s')
+            stream_handler.setFormatter(formatter)
+            self.__logger.addHandler(stream_handler)
+            self.__logger.setLevel(logging.DEBUG)
+
+    def set_spider(self, spider_mode):
+        if spider_mode:
+            self.__spider_mode = True
+        self.__logger.debug(f"Spider mode: {self.__spider_mode}")
+
+    def set_recursive(self, recursive_mode):
+        if recursive_mode:
+            self.__recursive_mode = True
+        self.__logger.debug(f"Recursive mode: {self.__recursive_mode}")
+
+    def set_depth_level(self, level):
+        self.__depth_level = level
+        self.__logger.debug(f"Depth level: {self.__depth_level}")
 
     def start(self):
-        if self.__level:
-            level = self.__level
+        if self.__recursive_mode and self.__spider_mode:
+            self.__logger.critical("Can't go in recursive and spider at the same time")
+        elif self.__spider_mode:
+            self.__logger.info("Running Spider mode")
+            self.__spider()
+        elif self.__recursive_mode:
+            self.__logger.info("Running Recursive mode")
+            self.__recursive()
         else:
-            level = INFO
-        if self.__spider:
-            log_format = '%(message)s'
-            debug_file = self.__output_file
-        else:
-            log_format = '%(asctime)s:%(levelname)s:%(message)s'
-            debug_file = 'debug.log'
-        basicConfig(level=level, filename=debug_file, format=log_format)
-        if self.__spider:
-            self.spider(self.__url, self.__deep)
-        else:
-            self.request(self.__url, self.__deep)
-
-# Main function to execute wget
-def main(args=None):
-    if not args:
-        parser = ArgumentParser()
-        parser.add_argument('setURL',
-                            help='URL for the requests need to start with [http://, https:// or ftp://]')  # Implemented
-        # output file
-        parser.add_argument('-o', '--output-file=', dest='setOutputFile',
-                            help='Destination of the download URL by default is the original file name',
-                            default=None)  # Implemented
-        # Debug mode
-        parser.add_argument('-v', '--verbose', help='Debug anything', dest='setVerbose', action='store_const',
-                            const=True,
-                            default=None)  # Implemented
-        # Don't print or log nothing
-        parser.add_argument('-q', '--quiet', help='Debug only warings', dest='setQuiet', action='store_const',
-                            const=True,
-                            default=None)  # Implemented
-        # Set a base URL for all server linked like /images/image.png with base url it will be requested as http://baseurl/images/image.png
-        parser.add_argument('-B', '--base=', help='The base for / urls', default=None, dest='setBaseURL')  # Implemented
-        # Max number of tries per url
-        parser.add_argument('-t', '--tries=', dest='setTries', help='Max number of tries per url', default=1,
-                            type=int)  # Implemented
-        # Spidering
-        parser.add_argument('--spider', dest='setSpider', default=False, action='store_const', const=True,
-                            help='Spidering; make a map from the website')  # Implemented
-        # Time to wait between responses
-        parser.add_argument('-w', '--wait=', dest='setWait', help='Max number of seconds waited between responses',
-                            type=float,
-                            default=0)  # Implemented
-        # Like cloning a website but nearly to wrong
-        parser.add_argument('-r', '--recursive', help='Turn on recursive option (download url inside other urls)',
-                            action='store_const', dest='setRecursive', const=True, default=False)  # Implemented
-        # The deep that the spider and recursive download can reach
-        parser.add_argument('-d', '--deep', dest='setDeep', help='Deepness in the spidering or recursive',
-                            default=2, type=int)  # Implemented
-        args = vars(parser.parse_args())
-    w = WGETHandler()
-    # Modular configuration
-    for key in args:
-        getattr(w, key)(args[key])
-    w.start()
+            self.__logger.info("Running Basic mode")
+            self.__basic()
 
 
-if __name__ == '__main__':
+def get_args():
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument("-o", "--output-file",
+                                 help="The filename/folder which/where you want to download the arget url",
+                                 default=".")
+    argument_parser.add_argument("-d", "--debug",
+                                 help="Set to debug mode",
+                                 action="store_true",
+                                 default=False)
+    argument_parser.add_argument("--spider",
+                                 help="Map the website",
+                                 action="store_true",
+                                 default=False)
+    argument_parser.add_argument("-r", "--recursive",
+                                 help="Download recursively every file (-o, --output-file is considered a directory)",
+                                 action="store_true",
+                                 default=False)
+    argument_parser.add_argument("-l", "--level=",
+                                 help="Depth level from spider or recursive modes",
+                                 type=int, default=5)
+    argument_parser.add_argument("url", help="Target url")
+    return vars(argument_parser.parse_args())
+
+
+def main():
+    arguments = get_args()
+    handler = Handler()
+    handler.set_debug_mode(arguments["debug"])
+    handler.set_url(arguments["url"])
+    handler.set_output_file(arguments["output_file"])
+    handler.set_spider(arguments["spider"])
+    handler.start()
+
+
+if __name__ == "__main__":
     main()
